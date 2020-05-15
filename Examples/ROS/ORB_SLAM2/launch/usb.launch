@@ -1,0 +1,14 @@
+<launch>
+    <!--定义全局参数-->
+    <arg name="rgb_image" default="/usb_cam/image_raw"/>
+    <arg name="path_to_vacabulary" default="/home/weihao/SLAM_Project/ORB_SLAM2-master/Vocabulary/ORBvoc.txt"/>
+    <arg name="path_to_settings" default="/home/weihao/SLAM_Project/ORB_SLAM2-master/Examples/Monocular/TUM1.yaml"/>
+    <!--启动摄像头节点(USB相机)-->
+    <include file="$(find usb_cam)/launch/usb_cam-test.launch"/>
+
+    <!--启动ORB-SLAM2 RGBD-->
+    <node name ="Mono" pkg="ORB_SLAM2" type="Mono" 
+        args="$(arg path_to_vacabulary) $(arg path_to_settings)" respawn="true" output="screen">
+        <remap from="/camera/image_raw" to="$(arg rgb_image)"/>
+    </node>
+</launch>

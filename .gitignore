@@ -21,4 +21,7 @@ Vocabulary/ORBvoc.txt
 build/
 *~
 lib/
-
+.kdev4/
+Examples/ROS/ORB_SLAM2/.fuse*
+*.kdev4
+*.kate-swp

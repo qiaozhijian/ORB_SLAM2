@@ -1,0 +1,12 @@
+<launch>
+    <!--定义全局参数-->
+    <arg name="rgb_image" default="/camera/image_raw"/>
+    <arg name="path_to_vacabulary" default="/media/qzj/Windows/love/code/ORB_SLAM2/Vocabulary/ORBvoc.txt"/>
+    <arg name="path_to_settings" default="/media/qzj/Windows/love/code/ORB_SLAM2/Examples/Monocular/KITTI00-02.yaml"/>
+
+    <!--启动ORB-SLAM2 RGBD-->
+    <node name ="Mono" pkg="ORB_SLAM2" type="Mono" 
+        args="$(arg path_to_vacabulary) $(arg path_to_settings)" respawn="true" output="screen">
+        <remap from="/camera/image_raw" to="$(arg rgb_image)"/>
+    </node>
+</launch>
