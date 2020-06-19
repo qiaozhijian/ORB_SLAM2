@@ -147,6 +147,9 @@ This will create **libORB_SLAM2.so**  at *lib* folder and the executables **mono
 ```
 ./Examples/Stereo/stereo_euroc Vocabulary/ORBvoc.txt Examples/Stereo/EuRoC.yaml PATH_TO_SEQUENCE/cam0/data PATH_TO_SEQUENCE/cam1/data Examples/Stereo/EuRoC_TimeStamps/SEQUENCE.txt
 ```
+```
+./Examples/Stereo/stereo_euroc Vocabulary/ORBvoc.txt Examples/Stereo/EuRoC.yaml dataset/EuRoC/V1_01_easy/mav0/cam0/data dataset/EuRoC/V1_01_easy/mav0/cam1/data Examples/Stereo/EuRoC_TimeStamps/V101.txt
+```
 
 # 6. RGB-D Example
 

@@ -39,7 +39,7 @@ class Map;
 class MapPoint;
 class Frame;
 class KeyFrameDatabase;
-
+//    关键帧，和普通的Frame不一样，但是可以由Frame来构造; 许多数据会被三个线程同时访问，所以用锁的地方很普遍
 class KeyFrame
 {
 public:

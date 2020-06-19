@@ -160,11 +160,11 @@ private:
     std::thread* mptLoopClosing;
     std::thread* mptViewer;
 
-    // Reset flag
+    // Reset flag 保正系统reset正常进行
     std::mutex mMutexReset;
     bool mbReset;
 
-    // Change mode flags
+    // Change mode flags 控制改变这俩mode时，不会有线程冲突
     std::mutex mMutexMode;
     bool mbActivateLocalizationMode;
     bool mbDeactivateLocalizationMode;

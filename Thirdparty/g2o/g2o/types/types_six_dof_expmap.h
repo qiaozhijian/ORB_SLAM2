@@ -171,6 +171,7 @@ public:
 };
 
 
+//继承一元边
 class  EdgeStereoSE3ProjectXYZOnlyPose: public  BaseUnaryEdge<3, Vector3d, VertexSE3Expmap>{
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

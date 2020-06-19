@@ -135,6 +135,7 @@ public:
     // In the stereo case, mvKeysUn is redundant as images must be rectified.
     // In the RGB-D case, RGB images can be distorted.
     std::vector<cv::KeyPoint> mvKeys, mvKeysRight;
+    ///校正mvKeys后的特征点
     std::vector<cv::KeyPoint> mvKeysUn;
 
     // Corresponding stereo coordinate and depth for each keypoint.
@@ -150,6 +151,7 @@ public:
     cv::Mat mDescriptors, mDescriptorsRight;
 
     // MapPoints associated to keypoints, NULL pointer if no association.
+    /// 每个特征点对应的MapPoint.如果特征点没有对应的地图点,那么将存储一个空指针
     std::vector<MapPoint*> mvpMapPoints;
 
     // Flag to identify outlier associations.

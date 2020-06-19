@@ -254,25 +254,28 @@ int Optimizer::PoseOptimization(Frame *pFrame)
     g2o::VertexSE3Expmap * vSE3 = new g2o::VertexSE3Expmap();
     vSE3->setEstimate(Converter::toSE3Quat(pFrame->mTcw));
     vSE3->setId(0);
+//    位置不固定
     vSE3->setFixed(false);
     optimizer.addVertex(vSE3);
 
     // Set MapPoint vertices
     const int N = pFrame->N;
 
+    // for Monocular
     vector<g2o::EdgeSE3ProjectXYZOnlyPose*> vpEdgesMono;
     vector<size_t> vnIndexEdgeMono;
     vpEdgesMono.reserve(N);
     vnIndexEdgeMono.reserve(N);
 
+    // for Stereo
     vector<g2o::EdgeStereoSE3ProjectXYZOnlyPose*> vpEdgesStereo;
     vector<size_t> vnIndexEdgeStereo;
     vpEdgesStereo.reserve(N);
     vnIndexEdgeStereo.reserve(N);
 
-    const float deltaMono = sqrt(5.991);
-    const float deltaStereo = sqrt(7.815);
-
+    // 卡方分布阈值,根据重投影误差的形式不同
+    const float deltaMono = sqrt(5.991);        // 两个平方项(\delta x^2 \delta y^2),自由度为2
+    const float deltaStereo = sqrt(7.815);      // 三个平方项(\delta x^2 \delta y^2 \delta rx^2),自由度为3
 
     {
     unique_lock<mutex> lock(MapPoint::mGlobalMutex);
@@ -283,6 +286,7 @@ int Optimizer::PoseOptimization(Frame *pFrame)
         if(pMP)
         {
             // Monocular observation
+            // 单目情况, 也有可能在双目下, 当前帧的左兴趣点找不到匹配的右兴趣点
             if(pFrame->mvuRight[i]<0)
             {
                 nInitialCorrespondences++;
@@ -296,17 +300,20 @@ int Optimizer::PoseOptimization(Frame *pFrame)
 
                 e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(0)));
                 e->setMeasurement(obs);
+                // 这个点的可信程度和特征点所在的图层有关
                 const float invSigma2 = pFrame->mvInvLevelSigma2[kpUn.octave];
                 e->setInformation(Eigen::Matrix2d::Identity()*invSigma2);
 
+                // 在这里使用了鲁棒核函数
                 g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
                 e->setRobustKernel(rk);
-                rk->setDelta(deltaMono);
+                rk->setDelta(deltaMono); // 前面提到过的卡方阈值
 
                 e->fx = pFrame->fx;
                 e->fy = pFrame->fy;
                 e->cx = pFrame->cx;
                 e->cy = pFrame->cy;
+                // 地图点的空间位置,作为迭代的初始值
                 cv::Mat Xw = pMP->GetWorldPos();
                 e->Xw[0] = Xw.at<float>(0);
                 e->Xw[1] = Xw.at<float>(1);
@@ -326,6 +333,7 @@ int Optimizer::PoseOptimization(Frame *pFrame)
                 Eigen::Matrix<double,3,1> obs;
                 const cv::KeyPoint &kpUn = pFrame->mvKeysUn[i];
                 const float &kp_ur = pFrame->mvuRight[i];
+//                双目的观测第三个是右相机的u
                 obs << kpUn.pt.x, kpUn.pt.y, kp_ur;
 
                 g2o::EdgeStereoSE3ProjectXYZOnlyPose* e = new g2o::EdgeStereoSE3ProjectXYZOnlyPose();
@@ -365,15 +373,15 @@ int Optimizer::PoseOptimization(Frame *pFrame)
         return 0;
 
     // We perform 4 optimizations, after each optimization we classify observation as inlier/outlier
-    // At the next optimization, outliers are not included, but at the end they can be classified as inliers again.
-    const float chi2Mono[4]={5.991,5.991,5.991,5.991};
+    // At the next optimization, outliers are not included, but at the end they can（可能，因为每次都重新判断内外点） be classified as inliers again.
+    const float chi2Mono[4]={5.991,5.991,5.991,5.991};//卡方阈值
     const float chi2Stereo[4]={7.815,7.815,7.815, 7.815};
+//    每次迭代实词
     const int its[4]={10,10,10,10};    
 
     int nBad=0;
     for(size_t it=0; it<4; it++)
     {
-
         vSE3->setEstimate(Converter::toSE3Quat(pFrame->mTcw));
         optimizer.initializeOptimization(0);
         optimizer.optimize(its[it]);
@@ -385,17 +393,18 @@ int Optimizer::PoseOptimization(Frame *pFrame)
 
             const size_t idx = vnIndexEdgeMono[i];
 
+//            如果是外点，则计算一下误差（因为不优化外点，所以之前没有计算过外点误差）
             if(pFrame->mvbOutlier[idx])
             {
                 e->computeError();
             }
-
+            // 就是error*\Omega*error,表征了这个点的误差大小(考虑置信度以后)
             const float chi2 = e->chi2();
 
             if(chi2>chi2Mono[it])
             {                
                 pFrame->mvbOutlier[idx]=true;
-                e->setLevel(1);
+                e->setLevel(1); //// 设置为outlier,level1 对应为外点,因为我们设置优化level为0，因此为1的就不优化
                 nBad++;
             }
             else
@@ -405,7 +414,7 @@ int Optimizer::PoseOptimization(Frame *pFrame)
             }
 
             if(it==2)
-                e->setRobustKernel(0);
+                e->setRobustKernel(0); // 除了前两次优化需要RobustKernel以外, 其余的优化都不需要 -- 因为重投影的误差已经有明显的下降了
         }
 
         for(size_t i=0, iend=vpEdgesStereo.size(); i<iend; i++)
@@ -447,6 +456,7 @@ int Optimizer::PoseOptimization(Frame *pFrame)
     cv::Mat pose = Converter::toCvMat(SE3quat_recov);
     pFrame->SetPose(pose);
 
+//    返回内点数
     return nInitialCorrespondences-nBad;
 }
 

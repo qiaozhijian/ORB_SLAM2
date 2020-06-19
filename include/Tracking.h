@@ -184,13 +184,14 @@ protected:
     //Calibration matrix
     cv::Mat mK;
     cv::Mat mDistCoef;
+//    baseline times fx
     float mbf;
 
     //New KeyFrame rules (according to fps)
     int mMinFrames;
     int mMaxFrames;
 
-    // Threshold close/far points
+    // Threshold close/far points 对于双目判断远近的阈值
     // Points seen as close by the stereo/RGBD sensor are considered reliable
     // and inserted from just one frame. Far points requiere a match in two keyframes.
     float mThDepth;

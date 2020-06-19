@@ -61,7 +61,9 @@ void LoopClosing::Run()
     while(1)
     {
         // Check if there are keyframes in the queue
-        if(CheckNewKeyFrames())
+        // Loopclosing中的关键帧是LocalMapping发送过来的，LocalMapping是Tracking中发过来的
+        // 在LocalMapping中通过 InsertKeyFrame 将关键帧插入闭环检测队列mlpLoopKeyFrameQueue
+        if(CheckNewKeyFrames()) // 闭环检测队列mlpLoopKeyFrameQueue中的关键帧不为空
         {
             // Detect loop candidates and check covisibility consistency
             if(DetectLoop())
@@ -227,7 +229,16 @@ bool LoopClosing::DetectLoop()
     mpCurrentKF->SetErase();
     return false;
 }
-
+/*
+ * @brief 计算当前帧与闭环帧的Sim3变换等
+ * @details \n
+ * 1. 通过Bow加速描述子的匹配，利用RANSAC粗略地计算出当前帧与闭环帧的Sim3（当前帧---闭环帧）          \n
+ * 2. 根据估计的Sim3，对3D点进行投影找到更多匹配，通过优化的方法计算更精确的Sim3（当前帧---闭环帧）     \n
+ * 3. 将闭环帧以及闭环帧相连的关键帧的MapPoints与当前帧的点进行匹配（当前帧---闭环帧+相连关键帧）      \n
+ * \n
+ * 注意以上匹配的结果均都存在成员变量mvpCurrentMatchedPoints中，实际的更新步骤见CorrectLoop()步骤3：Start Loop Fusion \n
+ * 对于双目或者是RGBD输入的情况,计算得到的尺度=1
+ */
 bool LoopClosing::ComputeSim3()
 {
     // For each consistent loop candidate we try to compute a Sim3

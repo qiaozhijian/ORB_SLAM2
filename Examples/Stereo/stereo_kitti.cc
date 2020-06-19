@@ -51,7 +51,7 @@ int main(int argc, char **argv)
     const int nImages = vstrImageLeft.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,true);
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,false);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -65,6 +65,7 @@ int main(int argc, char **argv)
     cv::Mat imLeft, imRight;
     for(int ni=0; ni<nImages; ni++)
     {
+        cout<<"frame: "<<ni<<endl;
         // Read left and right images from file
         imLeft = cv::imread(vstrImageLeft[ni],CV_LOAD_IMAGE_UNCHANGED);
         imRight = cv::imread(vstrImageRight[ni],CV_LOAD_IMAGE_UNCHANGED);
@@ -103,8 +104,8 @@ int main(int argc, char **argv)
         else if(ni>0)
             T = tframe-vTimestamps[ni-1];
 
-        if(ttrack<T)
-            usleep((T-ttrack)*1e6);
+//         if(ttrack<T)
+//             usleep((T-ttrack)*1e6);
     }
 
     // Stop all threads
@@ -147,8 +148,8 @@ void LoadImages(const string &strPathToSequence, vector<string> &vstrImageLeft,
         }
     }
 
-    string strPrefixLeft = strPathToSequence + "/image_0/";
-    string strPrefixRight = strPathToSequence + "/image_1/";
+    string strPrefixLeft = strPathToSequence + "/image_2/";
+    string strPrefixRight = strPathToSequence + "/image_3/";
 
     const int nTimes = vTimestamps.size();
     vstrImageLeft.resize(nTimes);

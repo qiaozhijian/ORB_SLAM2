@@ -52,6 +52,10 @@ void LocalMapping::Run()
     while(1)
     {
         // Tracking will see that Local Mapping is busy
+        // Tracking will see that Local Mapping is busy
+        // 告诉Tracking，LocalMapping正处于繁忙状态，
+        // LocalMapping线程处理的关键帧都是Tracking线程发过的
+        // 在LocalMapping线程还没有处理完关键帧之前Tracking线程最好不要发送太快
         SetAcceptKeyFrames(false);
 
         // Check if there are keyframes in the queue
@@ -61,11 +65,13 @@ void LocalMapping::Run()
             ProcessNewKeyFrame();
 
             // Check recent MapPoints
+            //  剔除 ProcessNewKeyFrame 和 CreateNewMapPoints 函数中引入的质量不好的 MapPoints
             MapPointCulling();
 
             // Triangulate new MapPoints
             CreateNewMapPoints();
 
+            // 没有新的关键帧时
             if(!CheckNewKeyFrames())
             {
                 // Find more matches in neighbor keyframes and fuse point duplications
@@ -125,6 +131,15 @@ bool LocalMapping::CheckNewKeyFrames()
     return(!mlNewKeyFrames.empty());
 }
 
+
+/*
+ * @brief 处理列表中的关键帧
+ * - 计算Bow，加速三角化新的MapPoints
+ * - 关联当前关键帧至MapPoints，并更新MapPoints的平均观测方向和观测距离范围
+ * - 插入关键帧，更新Covisibility图和Essential图
+ * @see VI-A keyframe insertion
+ *
+ */
 void LocalMapping::ProcessNewKeyFrame()
 {
     {
@@ -552,6 +567,7 @@ cv::Mat LocalMapping::ComputeF12(KeyFrame *&pKF1, KeyFrame *&pKF2)
     return K1.t().inv()*t12x*R12*K2.inv();
 }
 
+// 定位模式，全局BA，回环矫正
 void LocalMapping::RequestStop()
 {
     unique_lock<mutex> lock(mMutexStop);

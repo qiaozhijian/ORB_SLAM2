@@ -238,7 +238,13 @@ float MapPoint::GetFoundRatio()
     unique_lock<mutex> lock(mMutexFeatures);
     return static_cast<float>(mnFound)/mnVisible;
 }
-
+/**
+ * @brief 计算具有代表的描述子
+ *
+ * 由于一个MapPoint会被许多相机观测到，因此在插入关键帧后，需要判断是否更新当前点的最适合的描述子 \n
+ * 先获得当前点的所有描述子，然后计算描述子之间的两两距离，最好的描述子与其他描述子应该具有最小的距离中值
+ * @see III - C3.3
+ */
 void MapPoint::ComputeDistinctiveDescriptors()
 {
     // Retrieve all observed descriptors
@@ -326,6 +332,15 @@ bool MapPoint::IsInKeyFrame(KeyFrame *pKF)
     unique_lock<mutex> lock(mMutexFeatures);
     return (mObservations.count(pKF));
 }
+
+/**
+ * @brief 更新平均观测方向以及观测距离范围
+ *
+ * 由于一个MapPoint会被许多相机观测到，因此在插入关键帧后，需要更新相应变量
+ * 创建新的关键帧的时候会调用
+ *
+ * @see III - C2.2 c2.4
+ */
 
 void MapPoint::UpdateNormalAndDepth()
 {

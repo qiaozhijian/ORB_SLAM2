@@ -1324,7 +1324,18 @@ int ORBmatcher::SearchBySim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint*> &
 
     return nFound;
 }
-
+/*
+ * @brief 通过投影，对Local MapPoint进行跟踪
+ * 将Local MapPoint投影到当前帧中, 由此增加当前帧的MapPoints \n
+ * 在SearchLocalPoints()中已经将Local MapPoints重投影（isInFrustum()）到当前帧 \n
+ * 并标记了这些点是否在当前帧的视野中，即mbTrackInView \n
+ * 对这些MapPoints，在其投影点附近根据描述子距离选取匹配，以及最终的方向投票机制进行剔除
+ * @param  F           当前帧
+ * @param  vpMapPoints Local MapPoints
+ * @param  th          阈值
+ * @return             成功匹配的数量
+ * @see SearchLocalPoints() isInFrustum()
+ */
 int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono)
 {
     int nmatches = 0;
