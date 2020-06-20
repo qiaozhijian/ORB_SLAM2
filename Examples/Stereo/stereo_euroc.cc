@@ -138,6 +138,20 @@ int main(int argc, char **argv)
         cv::remap(imLeft,imLeftRect,M1l,M2l,cv::INTER_LINEAR);
         cv::remap(imRight,imRightRect,M1r,M2r,cv::INTER_LINEAR);
 
+        cv::Size imageSize(cols_l,rows_l);
+        cv::Mat canvas(imageSize.height, imageSize.width * 2, CV_8UC1);
+        cv::Mat canLeft = canvas(cv::Rect(0, 0, imageSize.width, imageSize.height));
+        cv::Mat canRight = canvas(cv::Rect(imageSize.width, 0, imageSize.width, imageSize.height));
+        cout<<"canLeft: "<<canLeft.type()<<" canvas: "<<canvas.type()<<endl;
+        imLeft(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canLeft);
+        imRight(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canRight);
+        cout << "done" << endl;
+        for (int j = 0; j <= canvas.rows; j += 16)
+            cv::line(canvas, cv::Point(0, j), cv::Point(canvas.cols, j), cv::Scalar(0, 255, 0), 1, 8);
+            cout << "stereo rectify done" << endl;
+        cv::imshow("canvas",canvas);
+        cv::waitKey(0);
+
         double tframe = vTimeStamp[ni];
 
 
