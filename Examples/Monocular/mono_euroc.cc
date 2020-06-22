@@ -72,7 +72,7 @@ int main(int argc, char **argv)
         // Read image from file
         im = cv::imread(vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
         double tframe = vTimestamps[ni];
-
+        cout << "frame: " << ni << endl;
         if(im.empty())
         {
             cerr << endl << "Failed to load image at: "
@@ -125,7 +125,7 @@ int main(int argc, char **argv)
     cout << "mean tracking time: " << totaltime/nImages << endl;
 
     // Save camera trajectory
-    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+    SLAM.SaveKeyFrameTrajectoryTUM("orb_mono_101.txt");
 
     return 0;
 }

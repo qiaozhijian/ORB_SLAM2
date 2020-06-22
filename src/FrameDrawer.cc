@@ -37,6 +37,7 @@ FrameDrawer::FrameDrawer(Map* pMap):mpMap(pMap)
 
 cv::Mat FrameDrawer::DrawFrame()
 {
+    bool verticalFlip=true;
     cv::Mat im;
     vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
     vector<int> vMatches; // Initialization: correspondeces with reference keypoints
@@ -50,9 +51,11 @@ cv::Mat FrameDrawer::DrawFrame()
         state=mState;
         if(mState==Tracking::SYSTEM_NOT_READY)
             mState=Tracking::NO_IMAGES_YET;
-
-        mIm.copyTo(im);
-
+        //垂直翻转
+        if(verticalFlip)
+            cv::flip(mIm,im,0);
+        else
+            mIm.copyTo(im);
         if(mState==Tracking::NOT_INITIALIZED)
         {
             vCurrentKeys = mvCurrentKeys;
@@ -97,10 +100,12 @@ cv::Mat FrameDrawer::DrawFrame()
             if(vbVO[i] || vbMap[i])
             {
                 cv::Point2f pt1,pt2;
-                pt1.x=vCurrentKeys[i].pt.x-r;
-                pt1.y=vCurrentKeys[i].pt.y-r;
-                pt2.x=vCurrentKeys[i].pt.x+r;
-                pt2.y=vCurrentKeys[i].pt.y+r;
+                if(verticalFlip)
+                    vCurrentKeys[i].pt.y = 480 - vCurrentKeys[i].pt.y - 1;
+                pt1.x= vCurrentKeys[i].pt.x - r;
+                pt1.y= vCurrentKeys[i].pt.y - r;
+                pt2.x= vCurrentKeys[i].pt.x + r;
+                pt2.y= vCurrentKeys[i].pt.y + r;
 
                 // This is a match to a MapPoint in the map
                 if(vbMap[i])

@@ -1,3 +1,4 @@
+stereo_robot Vocabulary/ORBvoc.txt Examples/Stereo/self_syl.yaml dataset/room216/01
 # ORB-SLAM2
 **Authors:** [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2))
 
@@ -142,14 +143,10 @@ This will create **libORB_SLAM2.so**  at *lib* folder and the executables **mono
 
 2. Execute the following first command for V1 and V2 sequences, or the second command for MH sequences. Change PATH_TO_SEQUENCE_FOLDER and SEQUENCE according to the sequence you want to run.
 ```
-./Examples/Stereo/stereo_euroc Vocabulary/ORBvoc.txt Examples/Stereo/EuRoC.yaml PATH_TO_SEQUENCE/mav0/cam0/data PATH_TO_SEQUENCE/mav0/cam1/data Examples/Stereo/EuRoC_TimeStamps/SEQUENCE.txt
-```
-```
-./Examples/Stereo/stereo_euroc Vocabulary/ORBvoc.txt Examples/Stereo/EuRoC.yaml PATH_TO_SEQUENCE/cam0/data PATH_TO_SEQUENCE/cam1/data Examples/Stereo/EuRoC_TimeStamps/SEQUENCE.txt
-```
-```
 ./Examples/Stereo/stereo_euroc Vocabulary/ORBvoc.txt Examples/Stereo/EuRoC.yaml dataset/EuRoC/V1_01_easy/mav0/cam0/data dataset/EuRoC/V1_01_easy/mav0/cam1/data Examples/Stereo/EuRoC_TimeStamps/V101.txt
 ```
+./Examples/Stereo/stereo_euroc Vocabulary/ORBvoc.txt Examples/Stereo/self.yaml dataset/room216/00/left dataset/room216/00/right Examples/Stereo/EuRoC_TimeStamps/V101.txt
+
 
 # 6. RGB-D Example
 
