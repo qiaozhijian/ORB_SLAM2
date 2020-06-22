@@ -53,7 +53,7 @@ cv::Mat FrameDrawer::DrawFrame()
             mState=Tracking::NO_IMAGES_YET;
         //垂直翻转
         if(verticalFlip)
-            cv::flip(mIm,im,0);
+            cv::flip(mIm,im,-1);
         else
             mIm.copyTo(im);
         if(mState==Tracking::NOT_INITIALIZED)
@@ -101,7 +101,10 @@ cv::Mat FrameDrawer::DrawFrame()
             {
                 cv::Point2f pt1,pt2;
                 if(verticalFlip)
+                {
                     vCurrentKeys[i].pt.y = 480 - vCurrentKeys[i].pt.y - 1;
+                    vCurrentKeys[i].pt.x = 640 - vCurrentKeys[i].pt.x - 1;
+                }
                 pt1.x= vCurrentKeys[i].pt.x - r;
                 pt1.y= vCurrentKeys[i].pt.y - r;
                 pt2.x= vCurrentKeys[i].pt.x + r;

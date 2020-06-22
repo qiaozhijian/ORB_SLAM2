@@ -29,4 +29,5 @@ Examples/ROS/ORB_SLAM2/.fuse*
 *.kate-swp
 /cmake-build-debug/
 .idea/
+/cmake-build-release/
 
