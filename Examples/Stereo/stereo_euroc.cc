@@ -70,22 +70,22 @@ int main(int argc, char **argv)
     }
 
     cv::Mat K_l, K_r, P_l, P_r, R_l, R_r, D_l, D_r;
-    fsSettings["LEFT.K"] >> K_l;
-    fsSettings["RIGHT.K"] >> K_r;
+    fsSettings["LEFT_K"] >> K_l;
+    fsSettings["RIGHT_K"] >> K_r;
 
-    fsSettings["LEFT.P"] >> P_l;
-    fsSettings["RIGHT.P"] >> P_r;
+    fsSettings["LEFT_P"] >> P_l;
+    fsSettings["RIGHT_P"] >> P_r;
 
-    fsSettings["LEFT.R"] >> R_l;
-    fsSettings["RIGHT.R"] >> R_r;
+    fsSettings["LEFT_R"] >> R_l;
+    fsSettings["RIGHT_R"] >> R_r;
 
-    fsSettings["LEFT.D"] >> D_l;
-    fsSettings["RIGHT.D"] >> D_r;
+    fsSettings["LEFT_D"] >> D_l;
+    fsSettings["RIGHT_D"] >> D_r;
 
-    int rows_l = fsSettings["LEFT.height"];
-    int cols_l = fsSettings["LEFT.width"];
-    int rows_r = fsSettings["RIGHT.height"];
-    int cols_r = fsSettings["RIGHT.width"];
+    int rows_l = fsSettings["LEFT_height"];
+    int cols_l = fsSettings["LEFT_width"];
+    int rows_r = fsSettings["RIGHT_height"];
+    int cols_r = fsSettings["RIGHT_width"];
 
     if(K_l.empty() || K_r.empty() || P_l.empty() || P_r.empty() || R_l.empty() || R_r.empty() || D_l.empty() || D_r.empty() ||
             rows_l==0 || rows_r==0 || cols_l==0 || cols_r==0)
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
     const int nImages = vstrImageLeft.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,false);
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO, true);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;

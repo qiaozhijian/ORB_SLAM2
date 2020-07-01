@@ -1,4 +1,18 @@
-stereo_robot Vocabulary/ORBvoc.txt Examples/Stereo/self_syl.yaml dataset/room216/01
+```
+stereo_euroc
+Vocabulary/ORBvoc.txt
+Examples/Stereo/EuRoC.yaml
+dataset/EuRoC/V1_01_easy/mav0/cam0/data
+dataset/EuRoC/V1_01_easy/mav0/cam1/data
+Examples/Stereo/EuRoC_TimeStamps/V101.txt
+```
+
+```
+stereo_robot
+Vocabulary/ORBvoc.txt
+/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round2/cali/result/data_params_matlab.yaml
+/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round2/01
+```
 # ORB-SLAM2
 **Authors:** [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2))
 

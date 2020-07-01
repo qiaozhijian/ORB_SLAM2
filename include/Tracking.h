@@ -88,6 +88,7 @@ public:
 
     eTrackingState mState;
     eTrackingState mLastProcessedState;
+    eTrackingState mStateLastTrack;
 
     // Input sensor
     int mSensor;

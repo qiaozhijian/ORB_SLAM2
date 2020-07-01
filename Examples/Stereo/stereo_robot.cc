@@ -33,6 +33,7 @@ using namespace std;
 
 void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps);
 std::string getDirEnd(std::string dataset_dir);
+ofstream staticsFile("./output/"+string("statics_temp.txt"));
 int main(int argc, char **argv)
 {
     if(argc != 4)
@@ -40,7 +41,7 @@ int main(int argc, char **argv)
         cerr << endl << "Usage: ./stereo_euroc path_to_vocabulary path_to_settings dataset_path" << endl;
         return 1;
     }
-    // Retrieve paths to images
+    //// Retrieve paths to images
     vector<string> vstrImageLeft;
     vector<string> vstrImageRight;
     vector<double> vTimeStamp;
@@ -57,68 +58,48 @@ int main(int argc, char **argv)
         return 1;
     }
     // Read rectification parameters
-    cv::FileStorage fsSettings(argv[2], cv::FileStorage::READ);
+    string strwriting = "/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round2/cali/result/data_params_matlab.yaml";
+    cv::FileStorage fsSettings(strwriting.c_str(), cv::FileStorage::READ);
+
     if(!fsSettings.isOpened())
     {
         cerr << "ERROR: Wrong path to settings" << endl;
         return -1;
     }
 
-    cv::Mat K_l, K_r, P_l, P_r, R_l, R_r, D_l, D_r,T_lr,R_lr;
-    fsSettings["LEFT.K"] >> K_l;
-    fsSettings["RIGHT.K"] >> K_r;
+    cv::Mat K_l, K_r, P_l, P_r, R_l, R_r, D_l, D_r;
+    cerr << "1" << endl;
+    fsSettings["LEFT_K"] >> K_l;
+    cerr << "1" << endl;
+    fsSettings["RIGHT_K"] >> K_r;
+    cerr << "1" << endl;
 
-    fsSettings["LEFT.P"] >> P_l;
-    fsSettings["RIGHT.P"] >> P_r;
+    fsSettings["LEFT_P"] >> P_l;
+    fsSettings["RIGHT_P"] >> P_r;
 
-    fsSettings["LEFT.R"] >> R_l;
-    fsSettings["RIGHT.R"] >> R_r;
+    fsSettings["LEFT_R"] >> R_l;
+    fsSettings["RIGHT_R"] >> R_r;
 
-    fsSettings["LEFT.D"] >> D_l;
-    fsSettings["RIGHT.D"] >> D_r;
+    fsSettings["LEFT_D"] >> D_l;
+    fsSettings["RIGHT_D"] >> D_r;
+    cerr << "point" << endl;
 
-
-    fsSettings["TranslationOfCamera2"] >> T_lr;
-    fsSettings["RotationOfCamera2"] >> R_lr;
-    //cout<<R_lr<<endl;
-    //R_lr=R_lr.t();
-    //cout<<R_lr<<endl;
-    //T_lr = T_lr/10;
-
-    int rows_l = fsSettings["LEFT.height"];
-    int cols_l = fsSettings["LEFT.width"];
-    int rows_r = fsSettings["RIGHT.height"];
-    int cols_r = fsSettings["RIGHT.width"];
+    int rows_l = fsSettings["LEFT_height"];
+    int cols_l = fsSettings["LEFT_width"];
+    int rows_r = fsSettings["RIGHT_height"];
+    int cols_r = fsSettings["RIGHT_width"];
+    cerr << "point" << endl;
 
     if(K_l.empty() || K_r.empty() || P_l.empty() || P_r.empty() || R_l.empty() || R_r.empty() || D_l.empty() || D_r.empty() ||
-            rows_l==0 || rows_r==0 || cols_l==0 || cols_r==0)
+       rows_l==0 || rows_r==0 || cols_l==0 || cols_r==0)
     {
         cerr << "ERROR: Calibration parameters to rectify stereo are missing!" << endl;
         return -1;
     }
 
-    cv::Size imageSize(cols_l,rows_l);
-    //校正旋转矩阵R，投影矩阵P 重投影矩阵Q
-    cv::Mat Rl, Rr, Pl, Pr, Q;
-    //图像校正之后，会对图像进行裁剪，这里的validROI就是指裁剪之后的区域, 其内部的所有像素都有效
-    cv::Rect validROIL;
-    cv::Rect validROIR;
-    //经过双目标定得到摄像头的各项参数后，采用OpenCV中的stereoRectify(立体校正)得到校正旋转矩阵R、投影矩阵P、重投影矩阵Q
-    //flags-可选的标志有两种零或者 CV_CALIB_ZERO_DISPARITY ,如果设置 CV_CALIB_ZERO_DISPARITY 的话，该函数会让两幅校正后的图像的主点有相同的像素坐标。否则该函数会水平或垂直的移动图像，以使得其有用的范围最大
-    //alpha-拉伸参数。如果设置为负或忽略，将不进行拉伸。如果设置为0，那么校正后图像只有有效的部分会被显示（没有黑色的部分），如果设置为1，那么就会显示整个图像。设置为0~1之间的某个值，其效果也居于两者之间。
-    stereoRectify(K_l, D_l, K_r, D_r, imageSize, R_lr, T_lr, Rl, Rr, Pl, Pr, Q, cv::CALIB_ZERO_DISPARITY,
-                  0, imageSize, &validROIL, &validROIR);
-    //cout<<Pl<<endl;
-    //cout<<Pr<<endl;
-// 相机校正
     cv::Mat M1l,M2l,M1r,M2r;
-    //再采用映射变换计算函数initUndistortRectifyMap得出校准映射参数,该函数功能是计算畸变矫正和立体校正的映射变换
-    cv::initUndistortRectifyMap(K_l,D_l,Rl,Pl.rowRange(0,3).colRange(0,3),cv::Size(cols_l,rows_l),CV_32F,M1l,M2l);
-    cv::initUndistortRectifyMap(K_r,D_r,Rr,Pr.rowRange(0,3).colRange(0,3),cv::Size(cols_r,rows_r),CV_32F,M1r,M2r);
-    //cv::initUndistortRectifyMap(K_l,D_l,R_l,P_l.rowRange(0,3).colRange(0,3),cv::Size(cols_l,rows_l),CV_32F,M1l,M2l);
-    //cv::initUndistortRectifyMap(K_r,D_r,R_r,P_r.rowRange(0,3).colRange(0,3),cv::Size(cols_r,rows_r),CV_32F,M1r,M2r);
-    //cv::initUndistortRectifyMap(K_l,D_l,R_l,cv::Mat(),cv::Size(cols_l,rows_l),CV_32F,M1l,M2l);
-    //cv::initUndistortRectifyMap(K_r,D_r,R_r,cv::Mat(),cv::Size(cols_r,rows_r),CV_32F,M1r,M2r);
+    cv::initUndistortRectifyMap(K_l,D_l,R_l,P_l.rowRange(0,3).colRange(0,3),cv::Size(cols_l,rows_l),CV_32F,M1l,M2l);
+    cv::initUndistortRectifyMap(K_r,D_r,R_r,P_r.rowRange(0,3).colRange(0,3),cv::Size(cols_r,rows_r),CV_32F,M1r,M2r);
 
     const int nImages = vstrImageLeft.size();
 
@@ -164,18 +145,15 @@ int main(int argc, char **argv)
         //cv::Mat canvas(imageSize.height, imageSize.width * 2, CV_8UC3);
         //cv::Mat canLeft = canvas(cv::Rect(0, 0, imageSize.width, imageSize.height));
         //cv::Mat canRight = canvas(cv::Rect(imageSize.width, 0, imageSize.width, imageSize.height));
-        //cout<<"canLeft: "<<imLeft.type()<<" canvas: "<<canvas.type()<<endl;
+        ////cout<<"canLeft: "<<imLeft.type()<<" canvas: "<<canvas.type()<<endl;
         //imLeftRect(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canLeft);
         //imRightRect(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canRight);
-        //cout << "done" << endl;
         //for (int j = 0; j <= canvas.rows; j += 16)
         //    cv::line(canvas, cv::Point(0, j), cv::Point(canvas.cols, j), cv::Scalar(0, 255, 0), 1, 8);
-        //    cout << "stereo rectify done" << endl;
         //cv::imshow("canvas",canvas);
         //cv::waitKey(0);
 
         double tframe = vTimeStamp[ni];
-
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
@@ -259,9 +237,9 @@ std::string getDirEnd(std::string dataset_dir)
 void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps)
 {
     cerr << "Start LoadImages." << endl;
-    //vTimeStamps.reserve(10000);
-    //vstrImageLeft.reserve(10000);
-    //vstrImageRight.reserve(10000);
+    vTimeStamps.reserve(10000);
+    vstrImageLeft.reserve(10000);
+    vstrImageRight.reserve(10000);
 
     unsigned int iSize = strPath.size();
     if(strPath.at(iSize-1)!='/')
@@ -269,23 +247,22 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
 
     string strPathLeft = strPath + "left";
     string strPathRight = strPath + "right";
-    int left_i=0, right_i=1;
+    int img_i=0;
     do{
         stringstream ss;
-        ss << setfill('0') << setw(6) << left_i;
+        ss << setfill('0') << setw(6) << img_i;
         std::string file = strPathLeft + "/" + ss.str() + ".jpg";
         if(exists_file(file))
         {
-            double t = 0.05*left_i;
+            double t = img_i/10.0;
             vTimeStamps.push_back(t);
             ss.clear();ss.str("");
-            ss << setfill('0') << setw(6) << left_i;
+            ss << setfill('0') << setw(6) << img_i;
             vstrImageLeft.push_back(strPathLeft + "/" + ss.str() + ".jpg");
             ss.clear();ss.str("");
-            ss << setfill('0') << setw(6) << right_i;
+            ss << setfill('0') << setw(6) << img_i;
             vstrImageRight.push_back(strPathRight + "/" + ss.str() + ".jpg");
-            left_i = left_i + 2;
-            right_i = right_i + 2;
+            img_i = img_i + 1;
         }
         else
             break;
