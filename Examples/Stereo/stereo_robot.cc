@@ -68,11 +68,8 @@ int main(int argc, char **argv)
     }
 
     cv::Mat K_l, K_r, P_l, P_r, R_l, R_r, D_l, D_r;
-    cerr << "1" << endl;
     fsSettings["LEFT_K"] >> K_l;
-    cerr << "1" << endl;
     fsSettings["RIGHT_K"] >> K_r;
-    cerr << "1" << endl;
 
     fsSettings["LEFT_P"] >> P_l;
     fsSettings["RIGHT_P"] >> P_r;
@@ -82,13 +79,11 @@ int main(int argc, char **argv)
 
     fsSettings["LEFT_D"] >> D_l;
     fsSettings["RIGHT_D"] >> D_r;
-    cerr << "point" << endl;
 
     int rows_l = fsSettings["LEFT_height"];
     int cols_l = fsSettings["LEFT_width"];
     int rows_r = fsSettings["RIGHT_height"];
     int cols_r = fsSettings["RIGHT_width"];
-    cerr << "point" << endl;
 
     if(K_l.empty() || K_r.empty() || P_l.empty() || P_r.empty() || R_l.empty() || R_r.empty() || D_l.empty() || D_r.empty() ||
        rows_l==0 || rows_r==0 || cols_l==0 || cols_r==0)
