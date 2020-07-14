@@ -58,8 +58,7 @@ int main(int argc, char **argv)
         return 1;
     }
     // Read rectification parameters
-    string strwriting = "/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round2/cali/result/data_params_matlab.yaml";
-    cv::FileStorage fsSettings(strwriting.c_str(), cv::FileStorage::READ);
+    cv::FileStorage fsSettings(argv[2], cv::FileStorage::READ);
 
     if(!fsSettings.isOpened())
     {
@@ -205,27 +204,6 @@ int main(int argc, char **argv)
     SLAM.SaveTrajectoryTUM(file_prefix + string("orb_slam.txt"));
 
     return 0;
-}
-
-#include <sys/stat.h>
-inline bool exists_file (const std::string& name) {
-    struct stat buffer;
-    return (stat (name.c_str(), &buffer) == 0);
-}
-
-std::string getDirEnd(std::string dataset_dir)
-{
-    std::string end;
-    unsigned int iSize = dataset_dir.size();
-    unsigned int i = 0;
-    for(i = 0; i < iSize; i++)
-    {
-        if(dataset_dir.at(i)=='/' && i!=iSize-1)
-            end=dataset_dir.substr(i+1);
-    }
-    if (end[end.size()-1]=='/')
-        end.pop_back();
-    return end;
 }
 
 

@@ -403,6 +403,7 @@ void Frame::ComputeBoW()
 
 void Frame::UndistortKeyPoints()
 {
+    //如果没有畸变，则不进行校正
     if(mDistCoef.at<float>(0)==0.0)
     {
         mvKeysUn=mvKeys;

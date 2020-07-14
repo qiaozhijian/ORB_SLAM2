@@ -176,6 +176,10 @@ private:
     std::mutex mMutexState;
 };
 
+
+
 }// namespace ORB_SLAM
 
+bool exists_file (const std::string& name);
+std::string getDirEnd(std::string dataset_dir);
 #endif // SYSTEM_H
