@@ -32,23 +32,23 @@ Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer
 {
     cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
 
-    float fps = fSettings["Camera_fps"];
+    float fps = fSettings["Camera.fps"];
     if(fps<1)
         fps=30;
     mT = 1e3/fps;
 
-    mImageWidth = fSettings["Camera_width"];
-    mImageHeight = fSettings["Camera_height"];
+    mImageWidth = fSettings["Camera.width"];
+    mImageHeight = fSettings["Camera.height"];
     if(mImageWidth<1 || mImageHeight<1)
     {
         mImageWidth = 640;
         mImageHeight = 480;
     }
 
-    mViewpointX = fSettings["Viewer_ViewpointX"];
-    mViewpointY = fSettings["Viewer_ViewpointY"];
-    mViewpointZ = fSettings["Viewer_ViewpointZ"];
-    mViewpointF = fSettings["Viewer_ViewpointF"];
+    mViewpointX = fSettings["Viewer.ViewpointX"];
+    mViewpointY = fSettings["Viewer.ViewpointY"];
+    mViewpointZ = fSettings["Viewer.ViewpointZ"];
+    mViewpointF = fSettings["Viewer.ViewpointF"];
 }
 
 void Viewer::Run()

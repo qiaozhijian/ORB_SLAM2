@@ -91,14 +91,14 @@ int main(int argc, char **argv)
 
 
     cv::FileStorage fSettings(argv[2], cv::FileStorage::READ);
-    bRGB = static_cast<bool>((int)fSettings["Camera_RGB"]);
-    float fps = fSettings["Camera_fps"];
+    bRGB = static_cast<bool>((int)fSettings["Camera.RGB"]);
+    float fps = fSettings["Camera.fps"];
     viewerAR.SetFPS(fps);
 
-    float fx = fSettings["Camera_fx"];
-    float fy = fSettings["Camera_fy"];
-    float cx = fSettings["Camera_cx"];
-    float cy = fSettings["Camera_cy"];
+    float fx = fSettings["Camera.fx"];
+    float fy = fSettings["Camera.fy"];
+    float cx = fSettings["Camera.cx"];
+    float cy = fSettings["Camera.cy"];
 
     viewerAR.SetCameraCalibration(fx,fy,cx,cy);
 
@@ -109,11 +109,11 @@ int main(int argc, char **argv)
     K.at<float>(1,2) = cy;
 
     DistCoef = cv::Mat::zeros(4,1,CV_32F);
-    DistCoef.at<float>(0) = fSettings["Camera_k1"];
-    DistCoef.at<float>(1) = fSettings["Camera_k2"];
-    DistCoef.at<float>(2) = fSettings["Camera_p1"];
-    DistCoef.at<float>(3) = fSettings["Camera_p2"];
-    const float k3 = fSettings["Camera_k3"];
+    DistCoef.at<float>(0) = fSettings["Camera.k1"];
+    DistCoef.at<float>(1) = fSettings["Camera.k2"];
+    DistCoef.at<float>(2) = fSettings["Camera.p1"];
+    DistCoef.at<float>(3) = fSettings["Camera.p2"];
+    const float k3 = fSettings["Camera.k3"];
     if(k3!=0)
     {
         DistCoef.resize(5);

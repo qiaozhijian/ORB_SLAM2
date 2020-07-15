@@ -5,34 +5,34 @@
 #--------------------------------------------------------------------------------------------
 
 # Camera calibration and distortion parameters (OpenCV) 
-Camera_fx: 435.2046959714599
-Camera_fy: 435.2046959714599
-Camera_cx: 367.4517211914062
-Camera_cy: 252.2008514404297
+Camera.fx: 435.2046959714599
+Camera.fy: 435.2046959714599
+Camera.cx: 367.4517211914062
+Camera.cy: 252.2008514404297
 
-Camera_k1: 0.0
-Camera_k2: 0.0
-Camera_p1: 0.0
-Camera_p2: 0.0
+Camera.k1: 0.0
+Camera.k2: 0.0
+Camera.p1: 0.0
+Camera.p2: 0.0
 
-Camera_width: 752
-Camera_height: 480
+Camera.width: 752
+Camera.height: 480
 
 # Camera frames per second
-Camera_fps: 20.0
+Camera.fps: 20.0
 
 # stereo baseline times fx
-Camera_bf: 47.90639384423901
+Camera.bf: 47.90639384423901
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
-Camera_RGB: 1
+Camera.RGB: 1
 
 # Close/Far threshold. Baseline times.
 ThDepth: 35
 
 #--------------------------------------------------------------------------------------------
 # Stereo Rectification. Only if you need to pre-rectify the images.
-# Camera_fx, .fy, etc must be the same as in LEFT_P
+# Camera.fx, .fy, etc must be the same as in LEFT_P
 #--------------------------------------------------------------------------------------------
 LEFT_height: 480
 LEFT_width: 752

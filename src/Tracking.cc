@@ -51,10 +51,10 @@ namespace ORB_SLAM2 {
 
         cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
         cout<<strSettingPath<<endl;
-        float fx = fSettings["Camera_fx"];
-        float fy = fSettings["Camera_fy"];
-        float cx = fSettings["Camera_cx"];
-        float cy = fSettings["Camera_cy"];
+        float fx = fSettings["Camera.fx"];
+        float fy = fSettings["Camera.fy"];
+        float cx = fSettings["Camera.cx"];
+        float cy = fSettings["Camera.cy"];
 
         cv::Mat K = cv::Mat::eye(3, 3, CV_32F);
         K.at<float>(0, 0) = fx;
@@ -63,21 +63,30 @@ namespace ORB_SLAM2 {
         K.at<float>(1, 2) = cy;
         K.copyTo(mK);
 
+        int img_width = fSettings["Camera.width"];
+        int img_height = fSettings["Camera.height"];
         cv::Mat DistCoef(4, 1, CV_32F);
-        DistCoef.at<float>(0) = fSettings["Camera_k1"];
-        DistCoef.at<float>(1) = fSettings["Camera_k2"];
-        DistCoef.at<float>(2) = fSettings["Camera_p1"];
-        DistCoef.at<float>(3) = fSettings["Camera_p2"];
-        const float k3 = fSettings["Camera_k3"];
+        DistCoef.at<float>(0) = fSettings["Camera.k1"];
+        DistCoef.at<float>(1) = fSettings["Camera.k2"];
+        DistCoef.at<float>(2) = fSettings["Camera.p1"];
+        DistCoef.at<float>(3) = fSettings["Camera.p2"];
+        const float k3 = fSettings["Camera.k3"];
         if (k3 != 0) {
             DistCoef.resize(5);
             DistCoef.at<float>(4) = k3;
         }
         DistCoef.copyTo(mDistCoef);
 
-        mbf = fSettings["Camera_bf"];
+        cv::initUndistortRectifyMap(mK, mDistCoef, cv::Mat_<double>::eye(3, 3), mK, cv::Size(img_width, img_height), CV_32F,
+                                mUndistXMono, mUndistYMono);
+        //cout<<mUndistXMono<<endl;
+        //cout<<mUndistYMono<<endl;
+        cout << "mUndistX size = " << mUndistXMono.size() << endl;
+        cout << "mUndistY size = " << mUndistYMono.size() << endl;
 
-        float fps = fSettings["Camera_fps"];
+        mbf = fSettings["Camera.bf"];
+
+        float fps = fSettings["Camera.fps"];
         if (fps == 0)
             fps = 30;
 
@@ -99,7 +108,7 @@ namespace ORB_SLAM2 {
         cout << "- fps: " << fps << endl;
 
 
-        int nRGB = fSettings["Camera_RGB"];
+        int nRGB = fSettings["Camera.RGB"];
         mbRGB = nRGB;
 
         if (mbRGB)
@@ -109,11 +118,11 @@ namespace ORB_SLAM2 {
 
         // Load ORB parameters
 
-        int nFeatures = fSettings["ORBextractor_nFeatures"];
-        float fScaleFactor = fSettings["ORBextractor_scaleFactor"];
-        int nLevels = fSettings["ORBextractor_nLevels"];
-        int fIniThFAST = fSettings["ORBextractor_iniThFAST"];
-        int fMinThFAST = fSettings["ORBextractor_minThFAST"];
+        int nFeatures = fSettings["ORBextractor.nFeatures"];
+        float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
+        int nLevels = fSettings["ORBextractor.nLevels"];
+        int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
+        int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
         mpORBextractorLeft = new ORBextractor(nFeatures, fScaleFactor, nLevels, fIniThFAST, fMinThFAST);
 
@@ -222,6 +231,8 @@ namespace ORB_SLAM2 {
 
     cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp) {
         mImGray = im;
+        cv::remap(mImGray, mImGray, mUndistXMono, mUndistYMono,cv::INTER_LINEAR); // interpolation type
+        mDistCoef = cv::Mat::zeros(cv::Size(5,1),CV_32F);
 
         if (mImGray.channels() == 3) {
             if (mbRGB)
@@ -908,12 +919,20 @@ namespace ORB_SLAM2 {
         // Decide if the tracking was succesful
         // More restrictive if there was a relocalization recently
         if (mCurrentFrame.mnId < mnLastRelocFrameId + mMaxFrames && mnMatchesInliers < 50)
+        {
+            cout<<"TrackLocalMap fail. mnMatchesInliers: "<<mnMatchesInliers<<endl;
             return false;
+        }
 
         if (mnMatchesInliers < 30)
+        {
+            cout<<"TrackLocalMap fail. mnMatchesInliers: "<<mnMatchesInliers<<endl;
             return false;
-        else
+        }
+        else{
+            cout<<"TrackLocalMap pass. mnMatchesInliers: "<<mnMatchesInliers<<endl;
             return true;
+        }
     }
 
 
@@ -1427,10 +1446,10 @@ namespace ORB_SLAM2 {
 
     void Tracking::ChangeCalibration(const string &strSettingPath) {
         cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
-        float fx = fSettings["Camera_fx"];
-        float fy = fSettings["Camera_fy"];
-        float cx = fSettings["Camera_cx"];
-        float cy = fSettings["Camera_cy"];
+        float fx = fSettings["Camera.fx"];
+        float fy = fSettings["Camera.fy"];
+        float cx = fSettings["Camera.cx"];
+        float cy = fSettings["Camera.cy"];
 
         cv::Mat K = cv::Mat::eye(3, 3, CV_32F);
         K.at<float>(0, 0) = fx;
@@ -1440,18 +1459,18 @@ namespace ORB_SLAM2 {
         K.copyTo(mK);
 
         cv::Mat DistCoef(4, 1, CV_32F);
-        DistCoef.at<float>(0) = fSettings["Camera_k1"];
-        DistCoef.at<float>(1) = fSettings["Camera_k2"];
-        DistCoef.at<float>(2) = fSettings["Camera_p1"];
-        DistCoef.at<float>(3) = fSettings["Camera_p2"];
-        const float k3 = fSettings["Camera_k3"];
+        DistCoef.at<float>(0) = fSettings["Camera.k1"];
+        DistCoef.at<float>(1) = fSettings["Camera.k2"];
+        DistCoef.at<float>(2) = fSettings["Camera.p1"];
+        DistCoef.at<float>(3) = fSettings["Camera.p2"];
+        const float k3 = fSettings["Camera.k3"];
         if (k3 != 0) {
             DistCoef.resize(5);
             DistCoef.at<float>(4) = k3;
         }
         DistCoef.copyTo(mDistCoef);
 
-        mbf = fSettings["Camera_bf"];
+        mbf = fSettings["Camera.bf"];
 
         Frame::mbInitialComputations = true;
     }

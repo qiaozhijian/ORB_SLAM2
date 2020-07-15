@@ -185,6 +185,7 @@ protected:
     //Calibration matrix
     cv::Mat mK;
     cv::Mat mDistCoef;
+    cv::Mat mUndistXMono, mUndistYMono;
 //    baseline times fx
     float mbf;
 
