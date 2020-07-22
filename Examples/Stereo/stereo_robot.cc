@@ -215,8 +215,12 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
     vstrImageRight.reserve(10000);
 
 
+    unsigned int iSize = strPath.size();
+    if(strPath.at(iSize-1)!='/')
+        strPath.push_back('/');
+
     ifstream fTimes;
-    string strPathTimeFile = strPath + "/cameraStamps.txt";
+    string strPathTimeFile = strPath + "cameraStamps.txt";
     fTimes.open(strPathTimeFile.c_str());
     while(!fTimes.eof())
     {
@@ -231,11 +235,6 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
             vTimeStamps.push_back(t);
         }
     }
-
-    unsigned int iSize = strPath.size();
-    if(strPath.at(iSize-1)!='/')
-        strPath.push_back('/');
-
     string strPathLeft = strPath + "left";
     string strPathRight = strPath + "right";
     int img_i=0;
