@@ -201,7 +201,7 @@ int main(int argc, char **argv)
 
     // Save camera trajectory
     string file_prefix = dataset_path + "robot" + getDirEnd(dataset_path)+"_";
-    SLAM.SaveTrajectoryTUM(file_prefix + string("orb_slam.txt"));
+    SLAM.SaveTrajectoryTUM(file_prefix + string("orb_stereo_slam.txt"));
 
     return 0;
 }
@@ -213,6 +213,24 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
     vTimeStamps.reserve(10000);
     vstrImageLeft.reserve(10000);
     vstrImageRight.reserve(10000);
+
+
+    ifstream fTimes;
+    string strPathTimeFile = strPath + "/cameraStamps.txt";
+    fTimes.open(strPathTimeFile.c_str());
+    while(!fTimes.eof())
+    {
+        string s;
+        getline(fTimes,s);
+        if(!s.empty())
+        {
+            stringstream ss;
+            ss << s;
+            double t;
+            ss >> t;
+            vTimeStamps.push_back(t);
+        }
+    }
 
     unsigned int iSize = strPath.size();
     if(strPath.at(iSize-1)!='/')
@@ -228,7 +246,6 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
         if(exists_file(file))
         {
             double t = img_i/10.0;
-            vTimeStamps.push_back(t);
             ss.clear();ss.str("");
             ss << setfill('0') << setw(6) << img_i;
             vstrImageLeft.push_back(strPathLeft + "/" + ss.str() + ".jpg");
@@ -240,6 +257,8 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
         else
             break;
     }while(1);
+
+    assert(vTimeStamps.size()==vstrImageLeft.size() && vTimeStamps.size()==vstrImageRight.size());
 
     cout<<"Finish LoadImages: "<<vstrImageLeft.size()<<endl;
 }

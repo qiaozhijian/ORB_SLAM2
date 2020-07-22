@@ -313,7 +313,8 @@ namespace ORB_SLAM2 {
                 } else {
                     bOK = Relocalization();
                 }
-            } else {
+            }
+            else {
                 // Localization Mode: Local Mapping is deactivated
 
                 if (mState == LOST) {
@@ -455,6 +456,7 @@ namespace ORB_SLAM2 {
 
             mLastFrame = Frame(mCurrentFrame);
         }
+
 
         // Store frame pose information to retrieve the complete camera trajectory afterwards.
         if (!mCurrentFrame.mTcw.empty()) {
