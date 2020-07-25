@@ -480,6 +480,7 @@ namespace ORB_SLAM2 {
     void Tracking::StereoInitialization() {
 //    检测特征点数量大于500
         if (mCurrentFrame.N > 500) {
+            mImGray.copyTo(mImKFGray);
             // Set Frame pose to the origin
             mCurrentFrame.SetPose(cv::Mat::eye(4, 4, CV_32F));
 
@@ -679,6 +680,7 @@ namespace ORB_SLAM2 {
         mvpLocalMapPoints = mpMap->GetAllMapPoints();
         mpReferenceKF = pKFcur;
         mCurrentFrame.mpReferenceKF = pKFcur;
+        mImGray.copyTo(mImKFGray);
 
         mLastFrame = Frame(mCurrentFrame);
 
@@ -710,10 +712,75 @@ namespace ORB_SLAM2 {
         }
     }
 
+    void Tracking::visualPointMatch(string s) {
+        // plot the matches
+        cv::Mat pic_Temp(mImGray.rows, mImGray.cols * 2, mImGray.type());
+        (mImGray.rowRange(0, mImGray.rows).colRange(0, mImGray.cols)).copyTo(pic_Temp.colRange(0, mImGray.cols));
+        (mImKFGray.rowRange(0, mImKFGray.rows).colRange(0, mImKFGray.cols)).copyTo(
+                pic_Temp.colRange(mImGray.cols, mImGray.cols * 2));
+        cv::cvtColor(pic_Temp, pic_Temp, 8);
+        vector<cv::KeyPoint> keypoints1;
+        vector<cv::KeyPoint> keypoints2;
+
+        cv::putText(pic_Temp, "cur", cv::Point(20, 20), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(200, 0, 0), 1, 8);
+
+        //for (int i = 0; i < mpReferenceKF->mvKeyLines.size(); i++)
+        //{
+        //    cv::Point Point;
+        //    KeyLine line = mpReferenceKF->mvKeyLines[i];
+        //    Point.x = (line.startPointX + line.endPointX)/2.0 + mImGray.cols;
+        //    Point.y = (line.startPointY + line.endPointY)/2.0;
+        //    cv::line(pic_Temp, cv::Point(line.startPointX + mImGray.cols,line.startPointY), cv::Point(line.endPointX + mImGray.cols,line.endPointY), Scalar(0,255,0), 1, CV_AA);
+        //    cv::putText(pic_Temp, std::to_string(i), Point, cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 200, 200), 1, 8);
+        //}
+        //
+        //for (int i = 0; i < mCurrentFrame.mvKeylinesUn.size(); i++)
+        //{
+        //    cv::Point Point;
+        //    KeyLine line = mCurrentFrame.mvKeylinesUn[i];
+        //    Point.x = (line.startPointX + line.endPointX)/2.0;
+        //    Point.y = (line.startPointY + line.endPointY)/2.0;
+        //    cv::line(pic_Temp, cv::Point(line.startPointX,line.startPointY), cv::Point(line.endPointX,line.endPointY), Scalar(255,0,0), 1, CV_AA);
+        //    cv::putText(pic_Temp, std::to_string(i), Point, cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 200, 200), 1, 8);
+        //}
+
+        for (int i = 0; i < mCurrentFrame.mvpMapPoints.size(); i++) {
+            if (!mCurrentFrame.mvpMapPoints[i])
+                continue;
+            cv::Point Point_1, Point_2;
+            cv::KeyPoint point_1, point_2;
+            point_1 = mCurrentFrame.mvKeysUn[i];
+            uint16_t pkfLineIdx = 0;
+            if (s == "Reference"){
+                pkfLineIdx = mCurrentFrame.mvpMapPoints[i]->GetIndexInKeyFrame(mpReferenceKF);
+                point_2 = mpReferenceKF->mvKeys[pkfLineIdx];
+            }
+            else if (s == "Last"){
+                pkfLineIdx = mCurrentFrame.mvpMapPoints[i]->GetIndexInKeyFrame(mpLastKeyFrame);
+                point_2 = mpLastKeyFrame->mvKeys[pkfLineIdx];
+            }
+            Point_1.x = point_1.pt.x;
+            Point_1.y = point_1.pt.y;
+            Point_2.x = point_1.pt.x + mImGray.cols;
+            Point_2.y = point_1.pt.y;
+
+            cv::line(pic_Temp, Point_1, Point_2, cv::Scalar(0, 0, 255), 2, CV_AA);
+            cv::putText(pic_Temp, std::to_string(i), Point_1, cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(200, 0, 0), 1,
+                        8);
+            cv::putText(pic_Temp, std::to_string(pkfLineIdx), Point_2, cv::FONT_HERSHEY_SIMPLEX, 0.4,
+                        cv::Scalar(0, 200, 0), 1, 8);
+        }
+
+        static int i = 0;
+        i++;
+        s = "./" + s;
+        //createDirectory(s);
+        cv::imwrite(s + "/" + to_string(i) + ".png", pic_Temp);
+    }
     /*
      * @brief 对参考关键帧的MapPoints进行跟踪
      *
-     * 1. 计算当前帧的词包，将当前帧的特征点分到特定层的nodes上
+     * 1. 计当前帧的词包，将当前帧的特征点分到特定层的nodes上
      * 2. 对属于同一node的描述子进行匹配
      * 3. 根据匹配对估计当前帧的姿态
      * 4. 根据姿态剔除误匹配
@@ -730,8 +797,14 @@ namespace ORB_SLAM2 {
         // 词袋加速匹配
         int nmatches = matcher.SearchByBoW(mpReferenceKF, mCurrentFrame, vpMapPointMatches);
 
-        if (nmatches < 15)
-            return false;
+        //if (mCurrentFrame.dealWithPoint) {
+            //lmatches = lmatcher.SearchByProjection(mpReferenceKF, mCurrentFrame, vpMapPointMatches);
+            //mCurrentFrame.mvpMapPoints = vpMapPointMatches;
+            visualPointMatch("Reference");
+        //} else {
+            if (nmatches < 15)
+                return false;
+        //}
 
 //        载入地图点
         mCurrentFrame.mvpMapPoints = vpMapPointMatches;
@@ -858,6 +931,8 @@ namespace ORB_SLAM2 {
             fill(mCurrentFrame.mvpMapPoints.begin(), mCurrentFrame.mvpMapPoints.end(), static_cast<MapPoint *>(NULL));
             nmatches = matcher.SearchByProjection(mCurrentFrame, mLastFrame, 2 * th, mSensor == System::MONOCULAR);
         }
+
+        visualPointMatch("Last");
 
         if (nmatches < 20)
             return false;
@@ -1021,6 +1096,7 @@ namespace ORB_SLAM2 {
 
         mpReferenceKF = pKF;
         mCurrentFrame.mpReferenceKF = pKF;
+        mImGray.copyTo(mImKFGray);
 
         if (mSensor != System::MONOCULAR) {
             mCurrentFrame.UpdatePoseMatrices();
