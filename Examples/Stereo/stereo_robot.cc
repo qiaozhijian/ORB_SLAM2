@@ -155,6 +155,7 @@ int main(int argc, char **argv)
         std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
 #endif
 
+        cout << "frame: " << ni << " ";
         // Pass the images to the SLAM system
         SLAM.TrackStereo(imLeftRect,imRightRect,tframe);
 
@@ -176,10 +177,15 @@ int main(int argc, char **argv)
         //用上一次的近似
         else if(ni>0)
             T = tframe-vTimeStamp[ni-1];
+
+        //if(ni==2)
+        //{
+        //    while(1);
+        //}
         if(ttrack<T)
         {
-            cout << "real-time frame: " << ni << " ttrack/T: "<<ttrack<<' '<<T << endl;
-            //usleep((T-ttrack)*1e6);
+            //cout << "real-time frame: " << ni << " ttrack/T: "<<ttrack<<' '<<T << endl;
+            usleep((T-ttrack)*1e6);
         }
         else
             cout << "fake-time frame: " << ni <<" ttrack/T: "<<ttrack<<' '<<T<< endl;
@@ -206,7 +212,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-
+#define SPEED_UP 5
 void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps)
 {
     cerr << "Start LoadImages." << endl;
@@ -222,8 +228,14 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
     ifstream fTimes;
     string strPathTimeFile = strPath + "cameraStamps.txt";
     fTimes.open(strPathTimeFile.c_str());
+    uint8_t cnt = 0;
     while(!fTimes.eof())
     {
+        cnt++;
+        if(cnt<SPEED_UP)
+            continue;
+        else
+            cnt = 0;
         string s;
         getline(fTimes,s);
         if(!s.empty())
@@ -239,6 +251,12 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
     string strPathRight = strPath + "right";
     int img_i=0;
     do{
+        img_i = img_i + 1;
+        cnt++;
+        if(cnt<SPEED_UP)
+            continue;
+        else
+            cnt = 0;
         stringstream ss;
         ss << setfill('0') << setw(6) << img_i;
         std::string file = strPathLeft + "/" + ss.str() + ".jpg";
@@ -251,7 +269,6 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
             ss.clear();ss.str("");
             ss << setfill('0') << setw(6) << img_i;
             vstrImageRight.push_back(strPathRight + "/" + ss.str() + ".jpg");
-            img_i = img_i + 1;
         }
         else
             break;

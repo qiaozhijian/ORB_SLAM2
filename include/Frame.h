@@ -151,7 +151,7 @@ public:
     cv::Mat mDescriptors, mDescriptorsRight;
 
     // MapPoints associated to keypoints, NULL pointer if no association.
-    /// 每个特征点对应的MapPoint.如果特征点没有对应的地图点,那么将存储一个空指针
+    /// 每个特征点对应的MapPoint.如果特征点没有对应的地图点,那么将存储一个空指针,是相机坐标系下的点
     std::vector<MapPoint*> mvpMapPoints;
 
     // Flag to identify outlier associations.

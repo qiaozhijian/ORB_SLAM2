@@ -48,9 +48,8 @@ namespace ORB_SLAM2 {
             mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer *>(NULL)), mpSystem(pSys), mpViewer(NULL),
             mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0) {
         // Load camera parameters from settings file
-
         cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
-        cout<<strSettingPath<<endl;
+        cout << strSettingPath << endl;
         float fx = fSettings["Camera.fx"];
         float fy = fSettings["Camera.fy"];
         float cx = fSettings["Camera.cx"];
@@ -77,8 +76,9 @@ namespace ORB_SLAM2 {
         }
         DistCoef.copyTo(mDistCoef);
 
-        cv::initUndistortRectifyMap(mK, mDistCoef, cv::Mat_<double>::eye(3, 3), mK, cv::Size(img_width, img_height), CV_32F,
-                                mUndistXMono, mUndistYMono);
+        cv::initUndistortRectifyMap(mK, mDistCoef, cv::Mat_<double>::eye(3, 3), mK, cv::Size(img_width, img_height),
+                                    CV_32F,
+                                    mUndistXMono, mUndistYMono);
         //cout<<mUndistXMono<<endl;
         //cout<<mUndistYMono<<endl;
         cout << "mUndistX size = " << mUndistXMono.size() << endl;
@@ -87,6 +87,7 @@ namespace ORB_SLAM2 {
         mbf = fSettings["Camera.bf"];
 
         float fps = fSettings["Camera.fps"];
+        fps = 10;
         if (fps == 0)
             fps = 30;
 
@@ -228,11 +229,10 @@ namespace ORB_SLAM2 {
         return mCurrentFrame.mTcw.clone();
     }
 
-
     cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp) {
         mImGray = im;
-        cv::remap(mImGray, mImGray, mUndistXMono, mUndistYMono,cv::INTER_LINEAR); // interpolation type
-        mDistCoef = cv::Mat::zeros(cv::Size(5,1),CV_32F);
+        cv::remap(mImGray, mImGray, mUndistXMono, mUndistYMono, cv::INTER_LINEAR); // interpolation type
+        mDistCoef = cv::Mat::zeros(cv::Size(5, 1), CV_32F);
 
         if (mImGray.channels() == 3) {
             if (mbRGB)
@@ -277,8 +277,7 @@ namespace ORB_SLAM2 {
 
             if (mState != OK)
                 return;
-        }
-        else {
+        } else {
             // System is initialized. Track Frame.
             bool bOK;
 
@@ -319,8 +318,7 @@ namespace ORB_SLAM2 {
 
                 if (mState == LOST) {
                     bOK = Relocalization();
-                }
-                else {
+                } else {
                     if (!mbVO) {
                         // In last frame we tracked enough MapPoints in the map
 
@@ -386,10 +384,9 @@ namespace ORB_SLAM2 {
 
             if (bOK)
                 mState = OK;
-            else
-            {
-                if(mLastProcessedState!=LOST)
-                    cout<<"lost!"<<endl;
+            else {
+                if (mLastProcessedState != LOST)
+                    cout << "lost!" << endl;
                 mState = LOST;
             }
 
@@ -419,7 +416,6 @@ namespace ORB_SLAM2 {
                             mCurrentFrame.mvpMapPoints[i] = static_cast<MapPoint *>(NULL);
                         }
                 }
-
                 // Delete temporal MapPoints
                 for (list<MapPoint *>::iterator lit = mlpTemporalPoints.begin(), lend = mlpTemporalPoints.end();
                      lit != lend; lit++) {
@@ -430,7 +426,10 @@ namespace ORB_SLAM2 {
 
                 // Check if we need to insert a new keyframe
                 if (NeedNewKeyFrame())
+                {
+                    cout<<"CreateNewKeyFrame"<<endl;
                     CreateNewKeyFrame();
+                }
 
                 // We allow points with high innovation (considererd outliers by the Huber Function)
                 // pass to the new keyframe, so that bundle adjustment will finally decide
@@ -456,7 +455,6 @@ namespace ORB_SLAM2 {
 
             mLastFrame = Frame(mCurrentFrame);
         }
-
 
         // Store frame pose information to retrieve the complete camera trajectory afterwards.
         if (!mCurrentFrame.mTcw.empty()) {
@@ -506,7 +504,17 @@ namespace ORB_SLAM2 {
                 }
             }
 
-            cout << "New map created with " << mpMap->MapPointsInMap() << " points" << endl;
+            int mvbMap = 0;
+            for (int i = 0; i < mCurrentFrame.N; i++) {
+                MapPoint *pMP = mCurrentFrame.mvpMapPoints[i];
+                if (pMP) {
+                    if (!mCurrentFrame.mvbOutlier[i]) {
+                        if (pMP->Observations() > 0)
+                            mvbMap++;
+                    }
+                }
+            }
+            cout << "New map created with " << mpMap->MapPointsInMap() << " points. " << "mvbMap: " << mvbMap << endl;
 
             mpLocalMapper->InsertKeyFrame(pKFini);
 
@@ -720,6 +728,7 @@ namespace ORB_SLAM2 {
      * @return 如果匹配数大于10，返回true
      */
     bool Tracking::TrackReferenceKeyFrame() {
+        cout << "Tracking: with ReferenceKeyFrame" << endl;
         // Compute Bag of Words vector
         mCurrentFrame.ComputeBoW();
 
@@ -735,6 +744,7 @@ namespace ORB_SLAM2 {
 
 //        载入地图点
         mCurrentFrame.mvpMapPoints = vpMapPointMatches;
+
 //        将上一帧作为当前帧的位姿值
         mCurrentFrame.SetPose(mLastFrame.mTcw);
 //      通过优化3D-2D的重投影误差来获得位姿
@@ -759,6 +769,7 @@ namespace ORB_SLAM2 {
 
         return nmatchesMap >= 10;
     }
+
     /**
      * @brief 双目或rgbd摄像头根据深度值为上一帧产生新的MapPoints
      *
@@ -823,6 +834,27 @@ namespace ORB_SLAM2 {
                 break;
         }
     }
+
+    bool Tracking::DebugPointVO(Frame frame)
+    {
+        int mvbVO = 0;
+        for(int i=0;i<frame.N;i++)
+        {
+            MapPoint* pMP = frame.mvpMapPoints[i];
+            if(pMP)
+            {
+                if(!frame.mvbOutlier[i])
+                {
+                    if(pMP->Observations()<=0)
+                    {
+                        mvbVO ++;
+                    }
+                }
+            }
+        }
+        cout<<"mvbVO: "<<mvbVO<<endl;
+    }
+
     /**
      * @brief 根据匀速度模型对上一帧的MapPoints进行跟踪
      *
@@ -834,6 +866,7 @@ namespace ORB_SLAM2 {
      * @see V-B Initial Pose Estimation From Previous Frame
      */
     bool Tracking::TrackWithMotionModel() {
+        cout << "Tracking: with motion model" << endl;
         ORBmatcher matcher(0.9, true);
 
         // Update last frame pose according to its reference keyframe
@@ -851,6 +884,7 @@ namespace ORB_SLAM2 {
         else
             th = 7;
         //通过投影进行搜索
+
         int nmatches = matcher.SearchByProjection(mCurrentFrame, mLastFrame, th, mSensor == System::MONOCULAR);
 
         // If few matches, uses a wider window search
@@ -879,6 +913,17 @@ namespace ORB_SLAM2 {
                     nmatches--;
                 } else if (mCurrentFrame.mvpMapPoints[i]->Observations() > 0)
                     nmatchesMap++;
+            }
+        }
+
+        for (int i = 0; i < mCurrentFrame.N; i++) {
+            MapPoint *pMP = mCurrentFrame.mvpMapPoints[i];
+            if (pMP) {
+                if (!mCurrentFrame.mvbOutlier[i]) {
+                    if (pMP->Observations() <= 0) {
+                        cout << "mvbVO" << endl;
+                    }
+                }
             }
         }
 
@@ -920,19 +965,16 @@ namespace ORB_SLAM2 {
 
         // Decide if the tracking was succesful
         // More restrictive if there was a relocalization recently
-        if (mCurrentFrame.mnId < mnLastRelocFrameId + mMaxFrames && mnMatchesInliers < 50)
-        {
-            cout<<"TrackLocalMap fail. mnMatchesInliers: "<<mnMatchesInliers<<endl;
+        if (mCurrentFrame.mnId < mnLastRelocFrameId + mMaxFrames && mnMatchesInliers < 50) {
+            //cout<<"TrackLocalMap fail. mnMatchesInliers: "<<mnMatchesInliers<<endl;
             return false;
         }
 
-        if (mnMatchesInliers < 30)
-        {
+        if (mnMatchesInliers < 30) {
             cout<<"TrackLocalMap fail. mnMatchesInliers: "<<mnMatchesInliers<<endl;
             return false;
-        }
-        else{
-            cout<<"TrackLocalMap pass. mnMatchesInliers: "<<mnMatchesInliers<<endl;
+        } else {
+            //cout<<"TrackLocalMap pass. mnMatchesInliers: "<<mnMatchesInliers<<endl;
             return true;
         }
     }
@@ -952,10 +994,11 @@ namespace ORB_SLAM2 {
         if (mCurrentFrame.mnId < mnLastRelocFrameId + mMaxFrames && nKFs > mMaxFrames)
             return false;
 
-        // Tracked MapPoints in the reference keyframe
+        // 当前观测到的地图点满足“最少被观测3次”的个数,3次代表，双目情况下，连续两个关键帧可以观测到
         int nMinObs = 3;
         if (nKFs <= 2)
             nMinObs = 2;
+        // NOTICE 在 UpdateLocalKeyFrames 函数中会将与当前关键帧共视程度最高的关键帧设定为当前帧的参考关键帧 -- 一般的参考关键帧的选择原则
         int nRefMatches = mpReferenceKF->TrackedMapPoints(nMinObs);
 
         // Local Mapping accept keyframes?
@@ -974,7 +1017,7 @@ namespace ORB_SLAM2 {
                 }
             }
         }
-
+        //合理区域内观测到的好点较少或坏点比较多
         bool bNeedToInsertClose = (nTrackedClose < 100) && (nNonTrackedClose > 70);
 
         // Thresholds
@@ -985,15 +1028,17 @@ namespace ORB_SLAM2 {
         if (mSensor == System::MONOCULAR)
             thRefRatio = 0.9f;
 
-        // Condition 1a: More than "MaxFrames" have passed from last keyframe insertion
+        // Condition 1a:mMaxFrames是fps，表示至少一秒插一次
         const bool c1a = mCurrentFrame.mnId >= mnLastKeyFrameId + mMaxFrames;
-        // Condition 1b: More than "MinFrames" have passed and Local Mapping is idle
+        // Condition 1b: mMinFrames默认为0，局部建图进程空闲
         const bool c1b = (mCurrentFrame.mnId >= mnLastKeyFrameId + mMinFrames && bLocalMappingIdle);
-        //Condition 1c: tracking is weak
+        //Condition 1c: 当前帧观测到的局部地图里的内点过少
         const bool c1c = mSensor != System::MONOCULAR && (mnMatchesInliers < nRefMatches * 0.25 || bNeedToInsertClose);
         // Condition 2: Few tracked points compared to reference keyframe. Lots of visual odometry compared to map matches.
+        //上面提到了与局部地图的匹配必须大于30才算跟踪成功
         const bool c2 = ((mnMatchesInliers < nRefMatches * thRefRatio || bNeedToInsertClose) && mnMatchesInliers > 15);
 
+        cout<<"nTrackedClose: "<<nTrackedClose<<" nNonTrackedClose: "<<nNonTrackedClose<<" bLocalMappingIdle: "<<bLocalMappingIdle<<" mnMatchesInliers: "<<mnMatchesInliers<<" nRefMatches * 0.25: "<<nRefMatches * 0.25<<endl;
         if ((c1a || c1b || c1c) && c2) {
             // If the mapping accepts keyframes, insert keyframe.
             // Otherwise send a signal to interrupt BA
@@ -1002,6 +1047,9 @@ namespace ORB_SLAM2 {
             } else {
                 mpLocalMapper->InterruptBA();
                 if (mSensor != System::MONOCULAR) {
+                    // 队列里不能阻塞太多关键帧
+                    // tracking插入关键帧不是直接插入，而且先插入到mlNewKeyFrames中，
+                    // 然后localmapper再逐个pop出来插入到mspKeyFrames
                     if (mpLocalMapper->KeyframesInQueue() < 3)
                         return true;
                     else

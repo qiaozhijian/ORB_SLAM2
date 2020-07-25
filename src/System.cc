@@ -111,6 +111,52 @@ namespace ORB_SLAM2 {
         mpLoopCloser->SetLocalMapper(mpLocalMapper);
     }
 
+    cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp) {
+        if (mSensor != MONOCULAR) {
+            cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular." << endl;
+            exit(-1);
+        }
+
+        // Check mode change
+        {
+            unique_lock<mutex> lock(mMutexMode);
+            if (mbActivateLocalizationMode) {
+                mpLocalMapper->RequestStop();
+
+                // Wait until Local Mapping has effectively stopped
+                while (!mpLocalMapper->isStopped()) {
+                    usleep(1000);
+                }
+
+                mpTracker->InformOnlyTracking(true);
+                mbActivateLocalizationMode = false;
+            }
+            if (mbDeactivateLocalizationMode) {
+                mpTracker->InformOnlyTracking(false);
+                mpLocalMapper->Release();
+                mbDeactivateLocalizationMode = false;
+            }
+        }
+
+        // Check reset
+        {
+            unique_lock<mutex> lock(mMutexReset);
+            if (mbReset) {
+                mpTracker->Reset();
+                mbReset = false;
+            }
+        }
+
+        cv::Mat Tcw = mpTracker->GrabImageMonocular(im, timestamp);
+
+        unique_lock<mutex> lock2(mMutexState);
+        mTrackingState = mpTracker->mState;
+        mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
+        mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+
+        return Tcw;
+    }
+
     cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp) {
         if (mSensor != STEREO) {
             cerr << "ERROR: you called TrackStereo but input sensor was not set to STEREO." << endl;
@@ -202,52 +248,6 @@ namespace ORB_SLAM2 {
         return Tcw;
     }
 
-    cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp) {
-        if (mSensor != MONOCULAR) {
-            cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular." << endl;
-            exit(-1);
-        }
-
-        // Check mode change
-        {
-            unique_lock<mutex> lock(mMutexMode);
-            if (mbActivateLocalizationMode) {
-                mpLocalMapper->RequestStop();
-
-                // Wait until Local Mapping has effectively stopped
-                while (!mpLocalMapper->isStopped()) {
-                    usleep(1000);
-                }
-
-                mpTracker->InformOnlyTracking(true);
-                mbActivateLocalizationMode = false;
-            }
-            if (mbDeactivateLocalizationMode) {
-                mpTracker->InformOnlyTracking(false);
-                mpLocalMapper->Release();
-                mbDeactivateLocalizationMode = false;
-            }
-        }
-
-        // Check reset
-        {
-            unique_lock<mutex> lock(mMutexReset);
-            if (mbReset) {
-                mpTracker->Reset();
-                mbReset = false;
-            }
-        }
-
-        cv::Mat Tcw = mpTracker->GrabImageMonocular(im, timestamp);
-
-        unique_lock<mutex> lock2(mMutexState);
-        mTrackingState = mpTracker->mState;
-        mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
-        mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
-
-        return Tcw;
-    }
-
     void System::ActivateLocalizationMode() {
         unique_lock<mutex> lock(mMutexMode);
         mbActivateLocalizationMode = true;
@@ -286,7 +286,6 @@ namespace ORB_SLAM2 {
         while (!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA()) {
             usleep(5000);
         }
-
         if (mpViewer) {
             delete mpViewer;
 
@@ -344,7 +343,7 @@ namespace ORB_SLAM2 {
                 pKF = pKF->GetParent();
             }
 
-            Trw  = Trw * pKF->GetPose() * Two;
+            Trw = Trw * pKF->GetPose() * Two;
 
             cv::Mat Tcw = (*lit) * Trw;
             cv::Mat Rwc = Tcw.rowRange(0, 3).colRange(0, 3).t();
@@ -471,22 +470,21 @@ namespace ORB_SLAM2 {
 } //namespace ORB_SLAM
 
 #include <sys/stat.h>
-bool exists_file (const std::string& name) {
+
+bool exists_file(const std::string &name) {
     struct stat buffer;
-    return (stat (name.c_str(), &buffer) == 0);
+    return (stat(name.c_str(), &buffer) == 0);
 }
 
-std::string getDirEnd(std::string dataset_dir)
-{
+std::string getDirEnd(std::string dataset_dir) {
     std::string end;
     unsigned int iSize = dataset_dir.size();
     unsigned int i = 0;
-    for(i = 0; i < iSize; i++)
-    {
-        if(dataset_dir.at(i)=='/' && i!=iSize-1)
-            end=dataset_dir.substr(i+1);
+    for (i = 0; i < iSize; i++) {
+        if (dataset_dir.at(i) == '/' && i != iSize - 1)
+            end = dataset_dir.substr(i + 1);
     }
-    if (end[end.size()-1]=='/')
+    if (end[end.size() - 1] == '/')
         end.pop_back();
     return end;
 }
