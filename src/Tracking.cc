@@ -761,8 +761,8 @@ namespace ORB_SLAM2 {
             }
             Point_1.x = point_1.pt.x;
             Point_1.y = point_1.pt.y;
-            Point_2.x = point_1.pt.x + mImGray.cols;
-            Point_2.y = point_1.pt.y;
+            Point_2.x = point_2.pt.x + mImGray.cols;
+            Point_2.y = point_2.pt.y;
 
             cv::line(pic_Temp, Point_1, Point_2, cv::Scalar(0, 0, 255), 2, CV_AA);
             cv::putText(pic_Temp, std::to_string(i), Point_1, cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(200, 0, 0), 1,
@@ -780,7 +780,7 @@ namespace ORB_SLAM2 {
     /*
      * @brief 对参考关键帧的MapPoints进行跟踪
      *
-     * 1. 计当前帧的词包，将当前帧的特征点分到特定层的nodes上
+     * 1. 计算当前帧的词包，将当前帧的特征点分到特定层的nodes上
      * 2. 对属于同一node的描述子进行匹配
      * 3. 根据匹配对估计当前帧的姿态
      * 4. 根据姿态剔除误匹配
@@ -797,14 +797,10 @@ namespace ORB_SLAM2 {
         // 词袋加速匹配
         int nmatches = matcher.SearchByBoW(mpReferenceKF, mCurrentFrame, vpMapPointMatches);
 
-        //if (mCurrentFrame.dealWithPoint) {
-            //lmatches = lmatcher.SearchByProjection(mpReferenceKF, mCurrentFrame, vpMapPointMatches);
-            //mCurrentFrame.mvpMapPoints = vpMapPointMatches;
-            visualPointMatch("Reference");
-        //} else {
-            if (nmatches < 15)
-                return false;
-        //}
+
+        if (nmatches < 15)
+            return false;
+
 
 //        载入地图点
         mCurrentFrame.mvpMapPoints = vpMapPointMatches;
@@ -812,6 +808,8 @@ namespace ORB_SLAM2 {
         mCurrentFrame.SetPose(mLastFrame.mTcw);
 //      通过优化3D-2D的重投影误差来获得位姿
         Optimizer::PoseOptimization(&mCurrentFrame);
+
+        visualPointMatch("Reference");
 
         // Discard outliers
         int nmatchesMap = 0;
@@ -932,10 +930,11 @@ namespace ORB_SLAM2 {
             nmatches = matcher.SearchByProjection(mCurrentFrame, mLastFrame, 2 * th, mSensor == System::MONOCULAR);
         }
 
-        visualPointMatch("Last");
+         visualPointMatch("Last");
 
         if (nmatches < 20)
             return false;
+
 
         // Optimize frame pose with all matches
         Optimizer::PoseOptimization(&mCurrentFrame);
