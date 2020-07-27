@@ -76,6 +76,7 @@ public:
     bool DebugPointVO(Frame frame);
     void visualPointMatch(string s="visual");
 
+
 public:
 
     // Tracking states
