@@ -471,22 +471,3 @@ namespace ORB_SLAM2 {
 
 } //namespace ORB_SLAM
 
-#include <sys/stat.h>
-
-bool exists_file(const std::string &name) {
-    struct stat buffer;
-    return (stat(name.c_str(), &buffer) == 0);
-}
-
-std::string getDirEnd(std::string dataset_dir) {
-    std::string end;
-    unsigned int iSize = dataset_dir.size();
-    unsigned int i = 0;
-    for (i = 0; i < iSize; i++) {
-        if (dataset_dir.at(i) == '/' && i != iSize - 1)
-            end = dataset_dir.substr(i + 1);
-    }
-    if (end[end.size() - 1] == '/')
-        end.pop_back();
-    return end;
-}

@@ -74,6 +74,7 @@ public:
     // Use this function if you have deactivated local mapping and you only want to localize the camera.
     void InformOnlyTracking(const bool &flag);
     bool DebugPointVO(Frame frame);
+    void visualPointMatch(string s="visual");
 
 public:
 
@@ -96,6 +97,7 @@ public:
     // Current Frame
     Frame mCurrentFrame;
     cv::Mat mImGray;
+    cv::Mat mImKFGray;
 
     // Initialization Variables (Monocular)
     std::vector<int> mvIniLastMatches;

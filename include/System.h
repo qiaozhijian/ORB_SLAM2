@@ -37,7 +37,7 @@
 #include "Viewer.h"
 
 #define CLOSE_LOOP false
-#define SPEED_UP 1
+#define SPEED_UP 5
 
 namespace ORB_SLAM2
 {
@@ -184,5 +184,4 @@ private:
 }// namespace ORB_SLAM
 
 bool exists_file (const std::string& name);
-std::string getDirEnd(std::string dataset_dir);
 #endif // SYSTEM_H

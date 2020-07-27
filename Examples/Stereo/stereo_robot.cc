@@ -28,11 +28,11 @@
 #include<opencv2/core/core.hpp>
 
 #include<System.h>
+#include"util.h"
 
 using namespace std;
 
 void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps);
-std::string getDirEnd(std::string dataset_dir);
 ofstream staticsFile("./output/"+string("statics_temp.txt"));
 int main(int argc, char **argv)
 {

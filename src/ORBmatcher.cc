@@ -1318,6 +1318,7 @@ namespace ORB_SLAM2 {
                     }
 
                     if (bestDist <= TH_HIGH) {
+                        //pcy 看这句，这里能够找到对应关系
                         CurrentFrame.mvpMapPoints[bestIdx2] = pMP;
                         nmatches++;
 

@@ -32,6 +32,7 @@
 
 #include"Optimizer.h"
 #include"PnPsolver.h"
+#include "util.h"
 
 #include<iostream>
 
@@ -483,6 +484,7 @@ namespace ORB_SLAM2 {
 
             // Create KeyFrame 此帧为关键帧
             KeyFrame *pKFini = new KeyFrame(mCurrentFrame, mpMap, mpKeyFrameDB);
+            mImGray.copyTo(mImKFGray);
 
             // Insert KeyFrame in the map
             mpMap->AddKeyFrame(pKFini);
@@ -687,6 +689,7 @@ namespace ORB_SLAM2 {
         mvpLocalMapPoints = mpMap->GetAllMapPoints();
         mpReferenceKF = pKFcur;
         mCurrentFrame.mpReferenceKF = pKFcur;
+        mImGray.copyTo(mImKFGray);
 
         mLastFrame = Frame(mCurrentFrame);
 
@@ -744,6 +747,7 @@ namespace ORB_SLAM2 {
 
 //        载入地图点
         mCurrentFrame.mvpMapPoints = vpMapPointMatches;
+        visualPointMatch("Reference");
 
 //        将上一帧作为当前帧的位姿值
         mCurrentFrame.SetPose(mLastFrame.mTcw);
@@ -768,6 +772,53 @@ namespace ORB_SLAM2 {
         }
 
         return nmatchesMap >= 10;
+    }
+
+    void Tracking::visualPointMatch(string s) {
+        // plot the matches
+        cv::Mat pic_Temp(mImGray.rows, mImGray.cols * 2, mImGray.type());
+        (mImGray.rowRange(0, mImGray.rows).colRange(0, mImGray.cols)).copyTo(pic_Temp.colRange(0, mImGray.cols));
+        (mImKFGray.rowRange(0, mImKFGray.rows).colRange(0, mImKFGray.cols)).copyTo(
+                pic_Temp.colRange(mImGray.cols, mImGray.cols * 2));
+        cv::cvtColor(pic_Temp, pic_Temp, 8);
+        vector<cv::KeyPoint> keypoints1;
+        vector<cv::KeyPoint> keypoints2;
+
+        cv::putText(pic_Temp, "cur", cv::Point(20, 20), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(200, 0, 0), 1, 8);
+
+        cout<<"mCurrentFrame.mvpMapPoints: "<<mCurrentFrame.mvpMapPoints.size()<<endl;
+        for (int i = 0; i < mCurrentFrame.mvpMapPoints.size(); i++) {
+            if (!mCurrentFrame.mvpMapPoints[i])
+                continue;
+            cv::Point Point_1, Point_2;
+            cv::KeyPoint point_1, point_2;
+            point_1 = mCurrentFrame.mvKeysUn[i];
+            uint16_t pkfPointIdx = 0;
+            if (s == "Reference"){
+                pkfPointIdx = mCurrentFrame.mvpMapPoints[i]->GetIndexInKeyFrame(mpReferenceKF);
+                point_2 = mpReferenceKF->mvKeys[pkfPointIdx];
+            }
+            else if (s == "Last"){
+                pkfPointIdx = mCurrentFrame.mvpMapPoints[i]->GetIndexInKeyFrame(mpLastKeyFrame);
+                point_2 = mpLastKeyFrame->mvKeys[pkfPointIdx];
+            }
+            Point_1.x = point_1.pt.x;
+            Point_1.y = point_1.pt.y;
+            Point_2.x = point_2.pt.x + mImGray.cols;
+            Point_2.y = point_2.pt.y;
+
+            cv::line(pic_Temp, Point_1, Point_2, cv::Scalar(0, 0, 255), 2, CV_AA);
+            cv::putText(pic_Temp, std::to_string(i), Point_1, cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(200, 0, 0), 1,
+                        8);
+            cv::putText(pic_Temp, std::to_string(pkfPointIdx), Point_2, cv::FONT_HERSHEY_SIMPLEX, 0.4,
+                        cv::Scalar(0, 200, 0), 1, 8);
+        }
+
+        static int i = 0;
+        i++;
+        s = "./" + s  + '/';
+        createDirectory(s);
+        cv::imwrite(s + "/" + to_string(i) + ".png", pic_Temp);
     }
 
     /**
@@ -892,6 +943,7 @@ namespace ORB_SLAM2 {
             fill(mCurrentFrame.mvpMapPoints.begin(), mCurrentFrame.mvpMapPoints.end(), static_cast<MapPoint *>(NULL));
             nmatches = matcher.SearchByProjection(mCurrentFrame, mLastFrame, 2 * th, mSensor == System::MONOCULAR);
         }
+        visualPointMatch("Last");
 
         if (nmatches < 20)
             return false;
@@ -1069,6 +1121,7 @@ namespace ORB_SLAM2 {
 
         mpReferenceKF = pKF;
         mCurrentFrame.mpReferenceKF = pKF;
+        mImGray.copyTo(mImKFGray);
 
         if (mSensor != System::MONOCULAR) {
             mCurrentFrame.UpdatePoseMatrices();

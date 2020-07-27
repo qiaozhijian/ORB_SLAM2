@@ -33,4 +33,7 @@ Examples/ROS/ORB_SLAM2/.fuse*
 /Last
 /Reference
 *.png
-
+*.jpg
+*slam.txt
+*vo.txt
+*.tum
