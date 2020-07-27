@@ -207,12 +207,14 @@ int main(int argc, char **argv)
 
     // Save camera trajectory
     string file_prefix = dataset_path + "robot" + getDirEnd(dataset_path)+"_";
-    SLAM.SaveTrajectoryTUM(file_prefix + string("orb_stereo_slam.txt"));
+    if(CLOSE_LOOP)
+        SLAM.SaveTrajectoryTUM(file_prefix + string("orb_stereo_slam.txt"));
+    else
+        SLAM.SaveTrajectoryTUM(file_prefix + string("orb_stereo_vo.txt"));
 
     return 0;
 }
 
-#define SPEED_UP 5
 void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps)
 {
     cerr << "Start LoadImages." << endl;

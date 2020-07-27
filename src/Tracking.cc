@@ -20,7 +20,7 @@
 
 
 #include "Tracking.h"
-
+#include "System.h"
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
 
@@ -87,7 +87,7 @@ namespace ORB_SLAM2 {
         mbf = fSettings["Camera.bf"];
 
         float fps = fSettings["Camera.fps"];
-        fps = 10;
+        fps = fps / SPEED_UP;
         if (fps == 0)
             fps = 30;
 

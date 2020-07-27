@@ -61,7 +61,7 @@ namespace ORB_SLAM2 {
             if (CheckNewKeyFrames()) // 闭环检测队列mlpLoopKeyFrameQueue中的关键帧不为空
             {
                 // Detect loop candidates and check covisibility consistency
-                if (DetectLoop()) {
+                if (DetectLoop() && enable) {
                     // Compute similarity transformation [sR|t]
                     // In the stereo/RGBD case s=1
                     if (ComputeSim3()) {

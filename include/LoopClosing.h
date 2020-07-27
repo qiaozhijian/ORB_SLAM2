@@ -80,6 +80,8 @@ public:
 
     bool isFinished();
 
+    bool enable = true;
+
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 protected:

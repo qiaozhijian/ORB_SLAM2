@@ -30,4 +30,7 @@ Examples/ROS/ORB_SLAM2/.fuse*
 /cmake-build-debug/
 .idea/
 /cmake-build-release/
+/Last
+/Reference
+*.png
 

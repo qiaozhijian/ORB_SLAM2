@@ -92,6 +92,8 @@ namespace ORB_SLAM2 {
         mpLoopCloser = new LoopClosing(mpMap, mpKeyFrameDatabase, mpVocabulary, mSensor != MONOCULAR);
 //    开启回环检测线程
         mptLoopClosing = new thread(&ORB_SLAM2::LoopClosing::Run, mpLoopCloser);
+        if(!CLOSE_LOOP)
+            mpLoopCloser->enable= false;
 
         //Initialize the Viewer thread and launch
         if (bUseViewer) {
