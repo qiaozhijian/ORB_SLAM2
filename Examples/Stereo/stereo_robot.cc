@@ -110,8 +110,18 @@ int main(int argc, char **argv)
 
     // Main loop
     cv::Mat imLeft, imRight, imLeftRect, imRightRect;
+    std::chrono::steady_clock::time_point t_init = std::chrono::steady_clock::now();
+    double tframeInit = vTimeStamp[0];
+    int frameNext = 0;
     for(int ni=0; ni<nImages; ni++)
     {
+        if(ni<frameNext)
+            continue;
+#ifdef COMPILEDWITHC11
+        std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+#else
+        std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
+#endif
         // Read left and right images from file
         imLeft = cv::imread(vstrImageLeft[ni],CV_LOAD_IMAGE_UNCHANGED);
         imRight = cv::imread(vstrImageRight[ni],CV_LOAD_IMAGE_UNCHANGED);
@@ -149,13 +159,7 @@ int main(int argc, char **argv)
 
         double tframe = vTimeStamp[ni];
 
-#ifdef COMPILEDWITHC11
-        std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-#else
-        std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
-#endif
-
-        cout << "frame: " << ni << " ";
+        cout << "frame: " << (ni + 1)*SPEED_UP-1 << " ";
         // Pass the images to the SLAM system
         SLAM.TrackStereo(imLeftRect,imRightRect,tframe);
 
@@ -166,29 +170,25 @@ int main(int argc, char **argv)
 #endif
 
         double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
-        
+
 //         track时长
         vTimesTrack[ni]=ttrack;
 
         // Wait to load the next frame
-        double T=0;
-        if(ni<nImages-1)
-            T = vTimeStamp[ni+1]-tframe;
-        //用上一次的近似
-        else if(ni>0)
-            T = tframe-vTimeStamp[ni-1];
-
-        //if(ni==2)
-        //{
-        //    while(1);
-        //}
-        if(ttrack<T)
+#ifdef COMPILEDWITHC11
+        std::chrono::steady_clock::time_point t_now = std::chrono::steady_clock::now();
+#else
+        std::chrono::monotonic_clock::time_point t_now = std::chrono::monotonic_clock::now();
+#endif
+        double fromInit = std::chrono::duration_cast<std::chrono::duration<double> >(t_now - t_init).count();
+        for(int niNext=ni; niNext<nImages; niNext++)
         {
-            //cout << "real-time frame: " << ni << " ttrack/T: "<<ttrack<<' '<<T << endl;
-            usleep((T-ttrack)*1e6);
+            double timePass = vTimeStamp[niNext] - tframeInit;
+            if(timePass<=fromInit)
+                frameNext = niNext;
+            else
+                break;
         }
-        //else
-        //    cout << "fake-time frame: " << ni <<" ttrack/T: "<<ttrack<<' '<<T<< endl;
     }
 
     // Stop all threads
@@ -234,12 +234,12 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
     while(!fTimes.eof())
     {
         cnt++;
+        string s;
+        getline(fTimes,s);
         if(cnt<SPEED_UP)
             continue;
         else
             cnt = 0;
-        string s;
-        getline(fTimes,s);
         if(!s.empty())
         {
             stringstream ss;
@@ -253,34 +253,34 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
     string strPathRight = strPath + "right";
 
     //load image 法一：
-    getSortedImages(strPathLeft, vstrImageLeft);
-    getSortedImages(strPathRight, vstrImageRight);
+    //getSortedImages(strPathLeft, vstrImageLeft);
+    //getSortedImages(strPathRight, vstrImageRight);
 
     //load image 法二：
-    //int img_i=0;
-    //do{
-    //    img_i = img_i + 1;
-    //    cnt++;
-    //    if(cnt<SPEED_UP)
-    //        continue;
-    //    else
-    //        cnt = 0;
-    //    stringstream ss;
-    //    ss << setfill('0') << setw(6) << img_i;
-    //    std::string file = strPathLeft + "/" + ss.str() + ".jpg";
-    //    if(exists_file(file))
-    //    {
-    //        double t = img_i/10.0;
-    //        ss.clear();ss.str("");
-    //        ss << setfill('0') << setw(6) << img_i;
-    //        vstrImageLeft.push_back(strPathLeft + "/" + ss.str() + ".jpg");
-    //        ss.clear();ss.str("");
-    //        ss << setfill('0') << setw(6) << img_i;
-    //        vstrImageRight.push_back(strPathRight + "/" + ss.str() + ".jpg");
-    //    }
-    //    else
-    //        break;
-    //}while(1);
+    int img_i=-1;
+    do{
+        img_i = img_i + 1;
+        cnt++;
+        if(cnt<SPEED_UP)
+            continue;
+        else
+            cnt = 0;
+        stringstream ss;
+        ss << setfill('0') << setw(6) << img_i;
+        std::string file = strPathLeft + "/" + ss.str() + ".jpg";
+        if(exists_file(file))
+        {
+            double t = img_i/10.0;
+            ss.clear();ss.str("");
+            ss << setfill('0') << setw(6) << img_i;
+            vstrImageLeft.push_back(strPathLeft + "/" + ss.str() + ".jpg");
+            ss.clear();ss.str("");
+            ss << setfill('0') << setw(6) << img_i;
+            vstrImageRight.push_back(strPathRight + "/" + ss.str() + ".jpg");
+        }
+        else
+            break;
+    }while(1);
 
     assert(vTimeStamps.size()==vstrImageLeft.size() && vTimeStamps.size()==vstrImageRight.size());
 

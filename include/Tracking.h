@@ -87,9 +87,18 @@ public:
         LOST=3
     };
 
+    // Tracking states
+    enum eTrackingMode{
+        TRACK_REFERENCE=0,
+        TRACK_MOTION_MODEL=1,
+        TRACK_LOCAL_MAP=2,
+        TRACK_REFERENCE_AFTER_MOTION=3
+    };
+
     eTrackingState mState;
     eTrackingState mLastProcessedState;
     eTrackingState mStateLastTrack;
+    eTrackingMode mTrackingMode;
 
     // Input sensor
     int mSensor;
