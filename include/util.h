@@ -38,7 +38,6 @@ int sting2Int(string s);
 bool exists_file(const std::string &name);
 string getDirEnd(string dataset_dir);
 string removeExtension(string filewhole);
-void getSortedImages(const boost::filesystem::path &img_dir, std::function<bool(const std::string &)> filter,
-                     std::function<bool(const std::string &, const std::string &)> comparator, std::vector<std::string> &img_paths);
+void getSortedImages(const string img_path, vector<string> &img_paths);
 
 #endif //RENAMEIMAGE_UTIL_H

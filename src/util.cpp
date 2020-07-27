@@ -53,8 +53,34 @@ int sting2Int(string s) {
     return x;
 }
 
-void getSortedImages(const boost::filesystem::path &img_dir, function<bool(const string &)> filter,
-                     function<bool(const string &, const string &)> comparator, vector<string> &img_paths) {
+void getSortedImages(const string img_path, vector<string> &img_paths) {
+
+    boost::filesystem::path img_dir(img_path);
+    if (!boost::filesystem::exists(img_dir) ||
+        !boost::filesystem::is_directory(img_dir))
+        throw std::runtime_error("[Dataset] Invalid directory");
+
+    boost::regex expression("^[^0-9]*([0-9]+\\.?+[0-9]*)[^0-9]*\\.[a-z]{3,4}$");
+    boost::cmatch what;
+    auto filename_filter = [&expression, &what](const std::string &s) {
+        return !boost::regex_match(s.c_str(), what, expression);
+    };
+
+    auto sort_by_number = [&expression, &what](const std::string &a, const std::string &b) {
+        double n1, n2;
+
+        if (boost::regex_match(a.c_str(), what, expression))
+            n1 = std::stod(what[1]);
+        else
+            throw std::runtime_error("[Dataset] Unexpected behaviour while sorting filenames");
+
+        if (boost::regex_match(b.c_str(), what, expression))
+            n2 = std::stod(what[1]);
+        else
+            throw std::runtime_error("[Dataset] Unexpected behaviour while sorting filenames");
+
+        return (n1 < n2);
+    };
 
     // get a sorted list of files in the img directories
     if (!boost::filesystem::exists(img_dir) ||
@@ -79,13 +105,13 @@ void getSortedImages(const boost::filesystem::path &img_dir, function<bool(const
     img_paths.clear();
     img_paths.reserve(all_imgs.size());
     for (const string &filename : all_imgs)
-        if (!filter(filename)) img_paths.push_back(filename);
+        if (!filename_filter(filename)) img_paths.push_back(filename);
 
     if (img_paths.empty())
         //cout<<"[Dataset] Invalid image names?"<<endl;
         throw runtime_error("[Dataset] Invalid image names?");
 
-    sort(img_paths.begin(), img_paths.end(), comparator);
+    sort(img_paths.begin(), img_paths.end(), sort_by_number);
 
     for (string &filename : img_paths)
         filename = (img_dir / filename).string();

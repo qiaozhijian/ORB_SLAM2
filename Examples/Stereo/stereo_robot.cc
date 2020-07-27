@@ -187,8 +187,8 @@ int main(int argc, char **argv)
             //cout << "real-time frame: " << ni << " ttrack/T: "<<ttrack<<' '<<T << endl;
             usleep((T-ttrack)*1e6);
         }
-        else
-            cout << "fake-time frame: " << ni <<" ttrack/T: "<<ttrack<<' '<<T<< endl;
+        //else
+        //    cout << "fake-time frame: " << ni <<" ttrack/T: "<<ttrack<<' '<<T<< endl;
     }
 
     // Stop all threads
@@ -251,30 +251,36 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
     }
     string strPathLeft = strPath + "left";
     string strPathRight = strPath + "right";
-    int img_i=0;
-    do{
-        img_i = img_i + 1;
-        cnt++;
-        if(cnt<SPEED_UP)
-            continue;
-        else
-            cnt = 0;
-        stringstream ss;
-        ss << setfill('0') << setw(6) << img_i;
-        std::string file = strPathLeft + "/" + ss.str() + ".jpg";
-        if(exists_file(file))
-        {
-            double t = img_i/10.0;
-            ss.clear();ss.str("");
-            ss << setfill('0') << setw(6) << img_i;
-            vstrImageLeft.push_back(strPathLeft + "/" + ss.str() + ".jpg");
-            ss.clear();ss.str("");
-            ss << setfill('0') << setw(6) << img_i;
-            vstrImageRight.push_back(strPathRight + "/" + ss.str() + ".jpg");
-        }
-        else
-            break;
-    }while(1);
+
+    //load image 法一：
+    getSortedImages(strPathLeft, vstrImageLeft);
+    getSortedImages(strPathRight, vstrImageRight);
+
+    //load image 法二：
+    //int img_i=0;
+    //do{
+    //    img_i = img_i + 1;
+    //    cnt++;
+    //    if(cnt<SPEED_UP)
+    //        continue;
+    //    else
+    //        cnt = 0;
+    //    stringstream ss;
+    //    ss << setfill('0') << setw(6) << img_i;
+    //    std::string file = strPathLeft + "/" + ss.str() + ".jpg";
+    //    if(exists_file(file))
+    //    {
+    //        double t = img_i/10.0;
+    //        ss.clear();ss.str("");
+    //        ss << setfill('0') << setw(6) << img_i;
+    //        vstrImageLeft.push_back(strPathLeft + "/" + ss.str() + ".jpg");
+    //        ss.clear();ss.str("");
+    //        ss << setfill('0') << setw(6) << img_i;
+    //        vstrImageRight.push_back(strPathRight + "/" + ss.str() + ".jpg");
+    //    }
+    //    else
+    //        break;
+    //}while(1);
 
     assert(vTimeStamps.size()==vstrImageLeft.size() && vTimeStamps.size()==vstrImageRight.size());
 
