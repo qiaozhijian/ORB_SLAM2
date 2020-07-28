@@ -317,27 +317,29 @@ namespace ORB_SLAM2 {
             if (bOK)
                 mState = OK;
             else {
-                bOK = true;
-                mState = OK;
+                //bOK = true;
+                //mState = OK;
                 if (mLastProcessedState != LOST)
                     cout << "lost!" << endl;
-                if(mTrackingMode==TRACK_LOCAL_MAP)
-                {
-                    mCurrentFrame.SetPose(mVelocity * mLastFrame.mTcw);
-                }
-                else if(mTrackingMode==TRACK_MOTION_MODEL)
-                {
-                    mCurrentFrame.SetPose(mVelocity * mLastFrame.mTcw);
-                }
-                else if(mTrackingMode==TRACK_REFERENCE_AFTER_MOTION)
-                {
-                    mCurrentFrame.SetPose(mVelocity * mLastFrame.mTcw);
-                }
-                else if(mTrackingMode==TRACK_REFERENCE)
-                {
-                    bOK = false;
-                    mState = LOST;
-                }
+                //if(mTrackingMode==TRACK_LOCAL_MAP)
+                //{
+                //    mCurrentFrame.SetPose(mVelocity * mLastFrame.mTcw);
+                //}
+                //else if(mTrackingMode==TRACK_MOTION_MODEL)
+                //{
+                //    mCurrentFrame.SetPose(mVelocity * mLastFrame.mTcw);
+                //}
+                //else if(mTrackingMode==TRACK_REFERENCE_AFTER_MOTION)
+                //{
+                //    mCurrentFrame.SetPose(mVelocity * mLastFrame.mTcw);
+                //}
+                //else if(mTrackingMode==TRACK_REFERENCE)
+                //{
+                //    bOK = false;
+                //    mState = LOST;
+                //}
+                bOK = false;
+                mState = LOST;
             }
 
             // Update drawer

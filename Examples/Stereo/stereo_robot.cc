@@ -29,9 +29,10 @@
 
 #include<System.h>
 #include"util.h"
+#include"ImuTypes.h"
 
 using namespace std;
-
+void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro, vector<cv::Point3f> &vOdo);
 void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps);
 ofstream staticsFile("./output/"+string("statics_temp.txt"));
 int main(int argc, char **argv)
@@ -45,6 +46,10 @@ int main(int argc, char **argv)
     vector<string> vstrImageLeft;
     vector<string> vstrImageRight;
     vector<double> vTimeStamp;
+    vector<cv::Point3f> vAcc, vGyro, vOdo;
+    vector<double> vTimestampsImu;
+    int first_imu = 0;
+
     string dataset_path = string(argv[3]);
     LoadImages(dataset_path, vstrImageLeft, vstrImageRight, vTimeStamp);
     if(vstrImageLeft.empty() || vstrImageRight.empty())
@@ -57,6 +62,13 @@ int main(int argc, char **argv)
         cerr << "ERROR: Different number of left and right images." << endl;
         return 1;
     }
+
+
+    string pathImu = dataset_path + "/robot.txt";
+    cout << "Loading IMU ";
+    LoadIMU(pathImu, vTimestampsImu, vAcc, vGyro, vOdo);
+    cout << "LOADED!" << endl;
+
     // Read rectification parameters
     cv::FileStorage fsSettings(argv[2], cv::FileStorage::READ);
 
@@ -113,6 +125,7 @@ int main(int argc, char **argv)
     std::chrono::steady_clock::time_point t_init = std::chrono::steady_clock::now();
     double tframeInit = vTimeStamp[0];
     int frameNext = 0;
+    vector<ORB_SLAM2::IMU::Point> vImuMeas;
     for(int ni=0; ni<nImages; ni++)
     {
         if(ni<frameNext)
@@ -158,6 +171,18 @@ int main(int argc, char **argv)
         //cv::waitKey(0);
 
         double tframe = vTimeStamp[ni];
+
+        // Load imu measurements from previous frame
+        vImuMeas.clear();
+
+        if(ni>0)
+            while(vTimestampsImu[first_imu]<=vTimeStamp[ni]) // while(vTimestampsImu[first_imu]<=vTimestampsCam[ni])
+            {
+                vImuMeas.push_back(ORB_SLAM2::IMU::Point(vAcc[first_imu].x,vAcc[first_imu].y,vAcc[first_imu].z,
+                                                         vGyro[first_imu].x,vGyro[first_imu].y,vGyro[first_imu].z,
+                                                         vTimestampsImu[first_imu]));
+                first_imu++;
+            }
 
         cout << "frame: " << (ni + 1)*SPEED_UP-1 << " ";
         // Pass the images to the SLAM system
@@ -286,3 +311,42 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
 
     cout<<"Finish LoadImages: "<<vstrImageLeft.size()<<endl;
 }
+void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro, vector<cv::Point3f> &vOdo)
+{
+    ifstream fImu;
+    fImu.open(strImuPath.c_str());
+    vTimeStamps.reserve(5000);
+    vAcc.reserve(5000);
+    vGyro.reserve(5000);
+    vOdo.reserve(5000);
+
+    while(!fImu.eof())
+    {
+        string s;
+        getline(fImu,s);
+        if (s[0] == '#')
+            continue;
+
+        if(!s.empty()) {
+            string item;
+            size_t pos = 0;
+            double data[10];
+            int count = 0;
+            while ((pos = s.find(' ')) != string::npos) {
+                item = s.substr(0, pos);
+                data[count++] = stod(item);
+                s.erase(0, pos + 1);
+            }
+            item = s.substr(0, pos);
+            //字符串转浮点数
+            data[9] = stod(item);
+
+            vTimeStamps.push_back(data[0]);
+            vGyro.push_back(cv::Point3f(data[1], data[2], data[3]));
+            vAcc.push_back(cv::Point3f(data[4], data[5], data[6]));
+            vOdo.push_back(cv::Point3f(data[7], data[8], data[9]));
+        }
+    }
+    cout << "Finish LoadIMU: " << vTimeStamps.size() << endl;
+}
+
