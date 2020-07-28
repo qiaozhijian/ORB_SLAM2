@@ -37,3 +37,4 @@ Examples/ROS/ORB_SLAM2/.fuse*
 *slam.txt
 *vo.txt
 *.tum
+*.pyc
