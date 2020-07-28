@@ -58,7 +58,7 @@ public:
              KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor);
 
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
-    cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
+    cv::Mat GrabImageStereo(long unsigned int ni, const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
     cv::Mat GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp);
     cv::Mat GrabImageMonocular(const cv::Mat &im, const double &timestamp);
 
@@ -75,7 +75,7 @@ public:
     void InformOnlyTracking(const bool &flag);
     bool DebugPointVO(Frame frame);
     void visualPointMatch(string s="visual");
-
+    void OutputCurrentMapPoints(string s = "");
 
 public:
 
@@ -92,8 +92,10 @@ public:
     enum eTrackingMode{
         TRACK_REFERENCE=0,
         TRACK_MOTION_MODEL=1,
-        TRACK_LOCAL_MAP=2,
-        TRACK_REFERENCE_AFTER_MOTION=3
+        TRACK_REFERENCE_AFTER_MOTION=2,
+        TRACK_LOCAL_MAP_AFTER_MOTION=3,
+        TRACK_LOCAL_MAP_AFTER_REFERENCE=4,
+        TRACK_LOCAL_MAP_AFTER_REFERENCE_AFTER_MOTION=5
     };
 
     eTrackingState mState;
@@ -106,6 +108,7 @@ public:
 
     // Current Frame
     Frame mCurrentFrame;
+    Frame mCurrentFrameCandi;
     cv::Mat mImGray;
     cv::Mat mImKFGray;
 
@@ -153,6 +156,8 @@ protected:
 
     bool TrackLocalMap();
     void SearchLocalPoints();
+
+    void PredictCurrentFrame();
 
     bool NeedNewKeyFrame();
     void CreateNewKeyFrame();

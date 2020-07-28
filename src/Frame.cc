@@ -43,7 +43,7 @@ namespace ORB_SLAM2 {
               mvDepth(frame.mvDepth), mBowVec(frame.mBowVec), mFeatVec(frame.mFeatVec),
               mDescriptors(frame.mDescriptors.clone()), mDescriptorsRight(frame.mDescriptorsRight.clone()),
               mvpMapPoints(frame.mvpMapPoints), mvbOutlier(frame.mvbOutlier), mnId(frame.mnId),
-              mpReferenceKF(frame.mpReferenceKF), mnScaleLevels(frame.mnScaleLevels),
+              mpReferenceKF(frame.mpReferenceKF), mnScaleLevels(frame.mnScaleLevels),mnRealId(frame.mnRealId),
               mfScaleFactor(frame.mfScaleFactor), mfLogScaleFactor(frame.mfLogScaleFactor),
               mvScaleFactors(frame.mvScaleFactors), mvInvScaleFactors(frame.mvInvScaleFactors),
               mvLevelSigma2(frame.mvLevelSigma2), mvInvLevelSigma2(frame.mvInvLevelSigma2) {
@@ -56,7 +56,7 @@ namespace ORB_SLAM2 {
     }
 
 
-    Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft,
+    Frame::Frame(long unsigned int realNi, const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft,
                  ORBextractor *extractorRight, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf,
                  const float &thDepth)
             : mpORBvocabulary(voc), mpORBextractorLeft(extractorLeft), mpORBextractorRight(extractorRight),
@@ -64,6 +64,7 @@ namespace ORB_SLAM2 {
               mpReferenceKF(static_cast<KeyFrame *>(NULL)) {
         // Frame ID
         mnId = nNextId++;
+        mnRealId = realNi;
 
         // Scale Level Info
         mnScaleLevels = mpORBextractorLeft->GetLevels();

@@ -58,14 +58,18 @@ namespace ORB_SLAM2 {
             if (pMP->isBad())
                 continue;
 
+            // 通过距离预测的金字塔层数，该层数相对于当前的帧
             const int &nPredictedLevel = pMP->mnTrackScaleLevel;
 
             // The size of the window will depend on the viewing direction
+            // 搜索窗口的大小取决于视角, 若当前视角和平均视角夹角接近0度时, r取一个较小的值
             float r = RadiusByViewingCos(pMP->mTrackViewCos);
 
+            // 如果需要进行更粗糙的搜索，则增大范围
             if (bFactor)
                 r *= th;
 
+            // 通过投影点(投影到当前帧,见isInFrustum())以及搜索窗口和预测的尺度进行搜索, 找出附近的兴趣点
             const vector<size_t> vIndices =
                     F.GetFeaturesInArea(pMP->mTrackProjX, pMP->mTrackProjY, r * F.mvScaleFactors[nPredictedLevel],
                                         nPredictedLevel - 1, nPredictedLevel);
@@ -75,6 +79,7 @@ namespace ORB_SLAM2 {
 
             const cv::Mat MPdescriptor = pMP->GetDescriptor();
 
+            // 最优的次优的
             int bestDist = 256;
             int bestLevel = -1;
             int bestDist2 = 256;
@@ -85,6 +90,7 @@ namespace ORB_SLAM2 {
             for (vector<size_t>::const_iterator vit = vIndices.begin(), vend = vIndices.end(); vit != vend; vit++) {
                 const size_t idx = *vit;
 
+                // 如果Frame中的该兴趣点已经有对应的MapPoint了,则退出该次循环
                 if (F.mvpMapPoints[idx])
                     if (F.mvpMapPoints[idx]->Observations() > 0)
                         continue;
@@ -113,6 +119,7 @@ namespace ORB_SLAM2 {
 
             // Apply ratio to second match (only if best and second are in the same scale level)
             if (bestDist <= TH_HIGH) {
+                // 这里的条件是排除，不明显的点
                 if (bestLevel == bestLevel2 && bestDist > mfNNratio * bestDist2)
                     continue;
 

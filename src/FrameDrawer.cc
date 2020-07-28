@@ -173,7 +173,7 @@ namespace ORB_SLAM2 {
                         if (pMP->Observations() > 0)
                             mvbMap[i] = true;
                         else {
-                            cout << "mvbVO" << endl;
+                            //cout << "mvbVO" << endl;
                             mvbVO[i] = true;
                         }
                     }

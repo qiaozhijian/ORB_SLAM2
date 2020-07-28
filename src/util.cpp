@@ -2,8 +2,24 @@
 // Created by qzj on 2020/6/24.
 //
 #include "util.h"
-
+#include <boost/filesystem.hpp>
+#include <boost/range/iterator_range.hpp>
+#ifdef WIN32
+#include <io.h>
+#include <direct.h>
+#else
+#include <unistd.h>
 #include <sys/stat.h>
+#endif
+#define MAX_PATH_LEN 256
+#ifdef WIN32
+#define ACCESS(fileName,accessMode) _access(fileName,accessMode)
+#define MKDIR(path) _mkdir(path)
+#else
+#define ACCESS(fileName,accessMode) access(fileName,accessMode)
+#define MKDIR(path) mkdir(path,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)
+#endif
+#include <dirent.h>
 
 bool exists_file(const std::string &name) {
     struct stat buffer;
@@ -190,3 +206,43 @@ void replace_str(std::string &str, const std::string &before, const std::string 
             break;
     }
 }
+
+
+void Getfilepath(const char *path, const char *filename,  char *filepath)
+{
+    strcpy(filepath, path);
+    if(filepath[strlen(path) - 1] != '/')
+        strcat(filepath, "/");
+    strcat(filepath, filename);
+    //printf("path is = %s\n",filepath);
+}
+
+bool DeleteFile(const char* path)
+{
+    DIR *dir;
+    struct dirent *dirinfo;
+    struct stat statbuf;
+    char filepath[256] = {0};
+    lstat(path, &statbuf);
+
+    if (S_ISREG(statbuf.st_mode))//判断是否是常规文件
+    {
+        remove(path);
+    }
+    else if (S_ISDIR(statbuf.st_mode))//判断是否是目录
+    {
+        if ((dir = opendir(path)) == NULL)
+            return 1;
+        while ((dirinfo = readdir(dir)) != NULL)
+        {
+            Getfilepath(path, dirinfo->d_name, filepath);
+            if (strcmp(dirinfo->d_name, ".") == 0 || strcmp(dirinfo->d_name, "..") == 0)//判断是否是特殊目录
+                continue;
+            DeleteFile(filepath);
+            rmdir(filepath);
+        }
+        closedir(dir);
+    }
+    return 0;
+}
+

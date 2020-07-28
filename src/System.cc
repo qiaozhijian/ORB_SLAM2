@@ -25,6 +25,7 @@
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
+#include "util.h"
 
 namespace ORB_SLAM2 {
 
@@ -47,6 +48,10 @@ namespace ORB_SLAM2 {
             cout << "Stereo" << endl;
         else if (mSensor == RGBD)
             cout << "RGB-D" << endl;
+
+        DeleteFile("./odometry");
+        DeleteFile("./Refernece");
+        DeleteFile("./Last");
 
         //Check settings file of camera
         cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
@@ -159,7 +164,7 @@ namespace ORB_SLAM2 {
         return Tcw;
     }
 
-    cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp) {
+    cv::Mat System::TrackStereo(long unsigned int ni, const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp) {
         if (mSensor != STEREO) {
             cerr << "ERROR: you called TrackStereo but input sensor was not set to STEREO." << endl;
             exit(-1);
@@ -196,7 +201,7 @@ namespace ORB_SLAM2 {
             }
         }
 //  当前帧相机姿态 世界坐标系到相机坐标坐标系的变换矩阵 Tcw
-        cv::Mat Tcw = mpTracker->GrabImageStereo(imLeft, imRight, timestamp);
+        cv::Mat Tcw = mpTracker->GrabImageStereo(ni, imLeft, imRight, timestamp);
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;

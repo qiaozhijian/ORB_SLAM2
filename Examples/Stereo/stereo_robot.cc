@@ -184,9 +184,9 @@ int main(int argc, char **argv)
                 first_imu++;
             }
 
-        cout << "frame: " << (ni + 1)*SPEED_UP-1 << " ";
+        cout << "frame: " << ni << " ";
         // Pass the images to the SLAM system
-        SLAM.TrackStereo(imLeftRect,imRightRect,tframe);
+        SLAM.TrackStereo(ni, imLeftRect,imRightRect,tframe);
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();

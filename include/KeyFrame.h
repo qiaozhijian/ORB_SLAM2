@@ -122,6 +122,7 @@ public:
 
     static long unsigned int nNextId;
     long unsigned int mnId;
+    long unsigned int mnRealId;
     const long unsigned int mnFrameId;
 
     const double mTimeStamp;
