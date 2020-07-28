@@ -699,7 +699,7 @@ namespace ORB_SLAM2 {
 
 //        载入地图点
         mCurrentFrame.mvpMapPoints = vpMapPointMatches;
-        visualPointMatch("Reference");
+        //visualPointMatch("Reference");
 
 //        将上一帧作为当前帧的位姿值
         mCurrentFrame.SetPose(mLastFrame.mTcw);
@@ -917,7 +917,7 @@ namespace ORB_SLAM2 {
             fill(mCurrentFrame.mvpMapPoints.begin(), mCurrentFrame.mvpMapPoints.end(), static_cast<MapPoint *>(NULL));
             nmatches = matcher.SearchByProjection(mCurrentFrame, mLastFrame, 2 * th, mSensor == System::MONOCULAR);
         }
-        visualPointMatch("Last");
+        //visualPointMatch("Last");
 
         if (nmatches < 20)
             return false;
