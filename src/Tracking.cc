@@ -41,6 +41,8 @@
 
 using namespace std;
 
+// vector <pair <int, int> > vLastIdx;
+
 namespace ORB_SLAM2 {
 
     Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Map *pMap,
@@ -697,7 +699,7 @@ namespace ORB_SLAM2 {
 
 //        载入地图点
         mCurrentFrame.mvpMapPoints = vpMapPointMatches;
-        //visualPointMatch("Reference");
+        visualPointMatch("Reference");
 
 //        将上一帧作为当前帧的位姿值
         mCurrentFrame.SetPose(mLastFrame.mTcw);
@@ -746,21 +748,34 @@ namespace ORB_SLAM2 {
         cv::putText(pic_Temp, "cur", cv::Point(20, 20), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(200, 0, 0), 1, 8);
 
         cout<<"mCurrentFrame.mvpMapPoints: "<<mCurrentFrame.mvpMapPoints.size()<<endl;
+
+        ORBmatcher matcher(0.9, true);
+
         for (int i = 0; i < mCurrentFrame.mvpMapPoints.size(); i++) {
             if (!mCurrentFrame.mvpMapPoints[i])
                 continue;
             cv::Point Point_1, Point_2;
             cv::KeyPoint point_1, point_2;
             point_1 = mCurrentFrame.mvKeysUn[i];
-            uint16_t pkfPointIdx = 0;
+            uint16_t pkfPointIdx = 65535;
             if (s == "Reference"){
                 pkfPointIdx = mCurrentFrame.mvpMapPoints[i]->GetIndexInKeyFrame(mpReferenceKF);
                 point_2 = mpReferenceKF->mvKeys[pkfPointIdx];
             }
             else if (s == "Last"){
-                pkfPointIdx = mCurrentFrame.mvpMapPoints[i]->GetIndexInKeyFrame(mpLastKeyFrame);
-                point_2 = mpLastKeyFrame->mvKeys[pkfPointIdx];
+                // if (vLastIdx[i].second == -1)
+                //     continue;
+                // pkfPointIdx = vLastIdx[i].second;
+
+                for (int j = 0; j < matcher.vLastIdx.size(); j++){
+                    if (i == matcher.vLastIdx[j].first){
+                        pkfPointIdx = matcher.vLastIdx[j].second;
+                        point_2 = mLastFrame.mvKeysUn[pkfPointIdx];
+                    }
+                }
             }
+            if (pkfPointIdx == 65535)
+                continue;
             Point_1.x = point_1.pt.x;
             Point_1.y = point_1.pt.y;
             Point_2.x = point_2.pt.x + mImGray.cols;
@@ -779,6 +794,7 @@ namespace ORB_SLAM2 {
         createDirectory(s);
         cv::imwrite(s + "/" + to_string(i) + ".png", pic_Temp);
     }
+
 
     /**
      * @brief 双目或rgbd摄像头根据深度值为上一帧产生新的MapPoints
@@ -901,7 +917,7 @@ namespace ORB_SLAM2 {
             fill(mCurrentFrame.mvpMapPoints.begin(), mCurrentFrame.mvpMapPoints.end(), static_cast<MapPoint *>(NULL));
             nmatches = matcher.SearchByProjection(mCurrentFrame, mLastFrame, 2 * th, mSensor == System::MONOCULAR);
         }
-        //visualPointMatch("Last");
+        visualPointMatch("Last");
 
         if (nmatches < 20)
             return false;

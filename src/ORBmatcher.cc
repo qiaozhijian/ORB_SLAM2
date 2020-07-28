@@ -31,11 +31,16 @@
 
 using namespace std;
 
+// extern vector <pair <int, int> > vLastIdx;
+// extern map<int,int> lastIdx;
+
 namespace ORB_SLAM2 {
 
     const int ORBmatcher::TH_HIGH = 100;
     const int ORBmatcher::TH_LOW = 50;
     const int ORBmatcher::HISTO_LENGTH = 30;
+    vector <pair <int, int> > ORBmatcher::vLastIdx;
+
 
     ORBmatcher::ORBmatcher(float nnratio, bool checkOri) : mfNNratio(nnratio), mbCheckOrientation(checkOri) {
     }
@@ -1247,6 +1252,9 @@ namespace ORB_SLAM2 {
         const bool bForward = tlc.at<float>(2) > CurrentFrame.mb && !bMono;
         const bool bBackward = -tlc.at<float>(2) > CurrentFrame.mb && !bMono;
 
+        // vector <pair <int, int> > vLastIdx;
+        vLastIdx.reserve(LastFrame.N);
+
         for (int i = 0; i < LastFrame.N; i++) {
             MapPoint *pMP = LastFrame.mvpMapPoints[i];
 
@@ -1322,6 +1330,8 @@ namespace ORB_SLAM2 {
                         CurrentFrame.mvpMapPoints[bestIdx2] = pMP;
                         nmatches++;
 
+                        vLastIdx.push_back(make_pair(bestIdx2, i));
+
                         if (mbCheckOrientation) {
                             float rot = LastFrame.mvKeysUn[i].angle - CurrentFrame.mvKeysUn[bestIdx2].angle;
                             if (rot < 0.0)
@@ -1336,6 +1346,9 @@ namespace ORB_SLAM2 {
                 }
             }
         }
+
+        // sort(vLastIdx.begin(),vLastIdx.end());
+
 
         //Apply rotation consistency
         if (mbCheckOrientation) {
