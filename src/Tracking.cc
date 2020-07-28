@@ -41,7 +41,7 @@
 
 using namespace std;
 
-vector <pair <int, int> > vLastIdx;
+// vector <pair <int, int> > vLastIdx;
 
 namespace ORB_SLAM2 {
 
@@ -746,6 +746,9 @@ namespace ORB_SLAM2 {
         cv::putText(pic_Temp, "cur", cv::Point(20, 20), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(200, 0, 0), 1, 8);
 
         cout<<"mCurrentFrame.mvpMapPoints: "<<mCurrentFrame.mvpMapPoints.size()<<endl;
+
+        ORBmatcher matcher(0.9, true);
+
         for (int i = 0; i < mCurrentFrame.mvpMapPoints.size(); i++) {
             if (!mCurrentFrame.mvpMapPoints[i])
                 continue;
@@ -762,9 +765,9 @@ namespace ORB_SLAM2 {
                 //     continue;
                 // pkfPointIdx = vLastIdx[i].second;
 
-                for (int j = 0; j < vLastIdx.size(); j++){
-                    if (i == vLastIdx[j].first){
-                        pkfPointIdx = vLastIdx[j].second;
+                for (int j = 0; j < matcher.vLastIdx.size(); j++){
+                    if (i == matcher.vLastIdx[j].first){
+                        pkfPointIdx = matcher.vLastIdx[j].second;
                         point_2 = mLastFrame.mvKeysUn[pkfPointIdx];
                     }
                 }

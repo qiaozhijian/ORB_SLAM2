@@ -31,7 +31,7 @@
 
 using namespace std;
 
-extern vector <pair <int, int> > vLastIdx;
+// extern vector <pair <int, int> > vLastIdx;
 // extern map<int,int> lastIdx;
 
 namespace ORB_SLAM2 {
@@ -39,6 +39,8 @@ namespace ORB_SLAM2 {
     const int ORBmatcher::TH_HIGH = 100;
     const int ORBmatcher::TH_LOW = 50;
     const int ORBmatcher::HISTO_LENGTH = 30;
+    vector <pair <int, int> > ORBmatcher::vLastIdx;
+
 
     ORBmatcher::ORBmatcher(float nnratio, bool checkOri) : mfNNratio(nnratio), mbCheckOrientation(checkOri) {
     }
