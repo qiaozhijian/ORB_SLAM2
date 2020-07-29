@@ -37,7 +37,7 @@
 #include "Viewer.h"
 
 #define CLOSE_LOOP false
-#define SPEED_UP 1
+#define SPEED_UP 5
 
 namespace ORB_SLAM2
 {

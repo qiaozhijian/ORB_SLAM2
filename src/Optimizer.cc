@@ -173,6 +173,7 @@ namespace ORB_SLAM2 {
 
         // Optimize!
         optimizer.initializeOptimization();
+        //cout<<"BundleAdjustment optimize"<<endl;
         optimizer.optimize(nIterations);
 
         // Recover optimized data
@@ -387,6 +388,7 @@ namespace ORB_SLAM2 {
             //因为是循环所以重新设置一次
             vSE3->setEstimate(Converter::toSE3Quat(pFrame->mTcw));
             optimizer.initializeOptimization(0);
+            //cout<<"PoseOptimization optimize"<<endl;
             optimizer.optimize(its[it]);
             //优化完成
 
@@ -654,6 +656,7 @@ namespace ORB_SLAM2 {
                 return;
 
         optimizer.initializeOptimization();
+        //cout<<"LocalBundleAdjustment optimize"<<endl;
         optimizer.optimize(5);
 
         bool bDoMore = true;
@@ -696,6 +699,7 @@ namespace ORB_SLAM2 {
             // Optimize again without the outliers
 
             optimizer.initializeOptimization(0);
+            //cout<<"LocalBundleAdjustment optimize 2"<<endl;
             optimizer.optimize(10);
 
         }
@@ -961,6 +965,7 @@ namespace ORB_SLAM2 {
 
         // Optimize!
         optimizer.initializeOptimization();
+        //cout<<"OptimizeEssentialGraph optimize"<<endl;
         optimizer.optimize(20);
 
         unique_lock<mutex> lock(pMap->mMutexMapUpdate);
@@ -1146,6 +1151,7 @@ namespace ORB_SLAM2 {
 
         // Optimize!
         optimizer.initializeOptimization();
+        //cout<<"OptimizeSim3 optimize"<<endl;
         optimizer.optimize(5);
 
         // Check inliers
@@ -1179,6 +1185,7 @@ namespace ORB_SLAM2 {
         // Optimize again only with inliers
 
         optimizer.initializeOptimization();
+        //cout<<"OptimizeSim3 optimize 2"<<endl;
         optimizer.optimize(nMoreIterations);
 
         int nIn = 0;

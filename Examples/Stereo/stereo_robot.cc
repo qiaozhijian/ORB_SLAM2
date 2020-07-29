@@ -128,8 +128,8 @@ int main(int argc, char **argv)
     vector<ORB_SLAM2::IMU::Point> vImuMeas;
     for(int ni=0; ni<nImages; ni++)
     {
-        if(ni<frameNext)
-            continue;
+        //if(ni<frameNext)
+        //    continue;
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 #else
@@ -184,9 +184,11 @@ int main(int argc, char **argv)
                 first_imu++;
             }
 
-        cout << "frame: " << ni << " ";
+        //cout << "frame: " << ni << " ";
+        //SLAM.TrackStereo(ni, imLeftRect,imRightRect,tframe);
+        cout << "frame: " << (ni + 1)*SPEED_UP-1 << " ";
+        SLAM.TrackStereo((ni + 1)*SPEED_UP-1, imLeftRect,imRightRect,tframe);
         // Pass the images to the SLAM system
-        SLAM.TrackStereo(ni, imLeftRect,imRightRect,tframe);
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();

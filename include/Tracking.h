@@ -85,7 +85,8 @@ public:
         NO_IMAGES_YET=0,
         NOT_INITIALIZED=1,
         OK=2,
-        LOST=3
+        LOST=3,
+        INITIALIZED_AGAIN=4
     };
 
     // Tracking states
@@ -138,6 +139,7 @@ protected:
 
     // Map initialization for stereo and RGB-D
     void StereoInitialization();
+    void StereoInitializationAgain();
 
     // Map initialization for monocular
     void MonocularInitialization();
