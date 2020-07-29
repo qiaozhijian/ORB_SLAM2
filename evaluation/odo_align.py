@@ -25,24 +25,15 @@ def main(args):
 
     # plot_slam_eval(est_stamps, est_xyz, gt_stamps, gt_xyz)
 
-    trans_err_mean, trans_err_max, trans_err_median, rot_err_mean, rot_err_max, rot_err_median = evo_ape(est_xyz,
-                                                                                                         est_quat,
-                                                                                                         gt_xyz,
-                                                                                                         gt_quat)
-
-    print("trans error max: ",trans_err_max)
-    print("trans error mean: ",trans_err_mean)
-    print("trans error median: ",trans_err_median)
-    print("rot error max: ",rot_err_max)
-    print("rot error mean: ",rot_err_mean)
-    print("rot error median: ",rot_err_median)
+    evo_rpe(est_xyz,est_quat,gt_xyz,gt_quat)
 
 
 if __name__ == "__main__":
     # parse command line
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gt_path', help='ground truth trajectory (format: timestamp tx ty tz qx qy qz qw)',default="")
-    parser.add_argument('--est_path', help='est_path trajectory (format: timestamp tx ty tz qx qy qz qw)',default="")
+    parser.add_argument('--gt_path', help='ground truth trajectory (format: timestamp tx ty tz qx qy qz qw)',
+                        default="")
+    parser.add_argument('--est_path', help='est_path trajectory (format: timestamp tx ty tz qx qy qz qw)', default="")
     parser.add_argument('--scale', help='scaling factor for the second trajectory (default: 1.0)', default=0.95)
     parser.add_argument('--seq', type=str, default="01")
     parser.add_argument('--slam', type=str, default='plo')
@@ -51,11 +42,12 @@ if __name__ == "__main__":
     parser.add_argument('--scaleAlign', type=bool, default=False)
     parser.add_argument('--Align', type=bool, default=False)
     parser.add_argument('--offset', help='time offset added to the timestamps of the second file (default: 0.0)',
-                        default=0.01)
+                        default=0.00)
     parser.add_argument('--max_difference',
                         help='maximally allowed time difference for matching entries (default: 0.02 s)',
                         default=0.02)
-    parser.add_argument('--plot', help='plot the first and the aligned second trajectory to an image (format: png)',default="re.pdf")
+    parser.add_argument('--plot', help='plot the first and the aligned second trajectory to an image (format: png)',
+                        default="re.pdf")
     parser.add_argument('--verbose',
                         help='print all evaluation data (otherwise, only the RMSE absolute translational error in meters after alignment will be printed)',
                         action='store_true')
@@ -67,11 +59,10 @@ if __name__ == "__main__":
         args.suffix = args.suffix + " -va"
 
     path = '/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round3/{}'.format(args.seq)
-    if args.est_path=="":
+    if args.est_path == "":
         args.est_path = os.path.join(path, "robot{}_{}_stereo_{}.txt").format(args.seq, args.slam, args.type_slam)
-    if args.gt_path=="":
-        args.gt_path = os.path.join(path, "vicon_{}.txt".format(args.seq))
-    # args.gt_path = os.path.join(path, "odometry{}.txt".format(args.seq))
+    if args.gt_path == "":
+        args.gt_path = os.path.join(path, "odometry{}.txt".format(args.seq))
 
     args.gt_traj = np.loadtxt(args.gt_path)
     args.est_traj = np.loadtxt(args.est_path)
@@ -82,13 +73,12 @@ if __name__ == "__main__":
     eval_name = args.est_path[:-4] + "_BodyFrame.txt"
     saveTum(eval_name, args.est_traj)
 
-    args.gt_traj = trans_robot_vicon(args.gt_traj)
+    args.gt_traj = trans_robot_odometry(args.gt_traj)
     gt_file_new = args.gt_path[:-4] + "_BodyFrame.txt"
     saveTum(gt_file_new, args.gt_traj)
 
-    # args.gt_traj = trans_robot_odometry(args.gt_traj)
-    # odo_file_new = odometryTxt[:-4] + "_BodyFrame.txt"
-    # saveTum(odo_file_new, odometryTraj)
+    print(tum2simple(args.est_traj[0, 1:]))
+    print(tum2simple(args.gt_traj[0, 1:]))
 
     args.est_traj = npToDict(args.est_traj)
     args.gt_traj = npToDict(args.gt_traj)
