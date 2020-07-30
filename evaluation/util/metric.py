@@ -123,13 +123,18 @@ def evo_ape(est_xyz, est_quat, gt_xyz, gt_quat):
         rot_route.append(rot_route[i - 1] + rotation(est_quat[i], gt_quat[i - 1]))
 
         t_err, q_err = tum_err(est_xyz[i], est_quat[i], gt_xyz[i], gt_quat[i])
-
-        trans_err_list.append(np.linalg.norm(t_err) / trans_route[i] * 100)
-        rot_err_list.append(np.linalg.norm(quat2euler(q_err)) / rot_route[i] * 100)
+        # 走一段路程后再开始运算
+        if trans_route[i] > 1.0:
+            trans_err_list.append(np.linalg.norm(t_err) / trans_route[i] * 100)
+        if rot_route[i] > 10.0:
+            rot_err_list.append(np.linalg.norm(quat2euler(q_err)) / rot_route[i] * 100)
 
     trans_err_list.sort()
     rot_err_list.sort()
 
+    return trans_err_list, rot_err_list
+
+def evo_statics(trans_err_list, rot_err_list):
     trans_err_mean = np.mean(trans_err_list)
     trans_err_max = np.max(trans_err_list)
     trans_err_median = np.median(trans_err_list)

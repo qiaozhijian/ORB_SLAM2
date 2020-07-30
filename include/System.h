@@ -39,7 +39,7 @@
 #include "ImuTypes.h"
 #include "odometer.h"
 
-#define CLOSE_LOOP false
+#define CLOSE_LOOP true
 #define SPEED_UP 1
 
 namespace ORB_SLAM2

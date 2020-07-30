@@ -71,6 +71,12 @@ def plot_traj(ax, stamps, traj, style, color, label):
     if len(x) > 0:
         ax.plot(x, y, z, style, color=color, label=label)
 
+def plot_seq(data, labels = 'box'):
+    plt.figure()
+    data = np.asarray(data).flatten()
+    plt.plot(data)
+    plt.show()
+
 
 def plot_slam_eval(second_stamps, est_xyz, first_stamps, gt_xyz):
     fig = plt.figure()

@@ -61,13 +61,16 @@ namespace ORB_SLAM2 {
             if (CheckNewKeyFrames()) // 闭环检测队列mlpLoopKeyFrameQueue中的关键帧不为空
             {
                 // Detect loop candidates and check covisibility consistency
-                if (DetectLoop() && enable) {
+                if (enable && DetectLoop()) {
                     // Compute similarity transformation [sR|t]
                     // In the stereo/RGBD case s=1
+                    cout << "Loop find!";
                     if (ComputeSim3()) {
+                        cout << " Loop correct!" << endl;
                         // Perform loop fusion and pose graph optimization
                         CorrectLoop();
-                    }
+                    } else
+                        cout << " Loop fail!" << endl;
                 }
             }
 
@@ -370,7 +373,6 @@ namespace ORB_SLAM2 {
     }
 
     void LoopClosing::CorrectLoop() {
-        cout << "Loop detected!" << endl;
 
         // Send a stop signal to Local Mapping
         // Avoid new keyframes are inserted while correcting the loop

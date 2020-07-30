@@ -1,4 +1,0 @@
-#echo $ROS_PACKAGE_PATH
-export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:/media/qzj/Windows/love/code/ORB_SLAM2/Examples/ROS
-roscore
-rosrun ORB_SLAM2 Mono Vocabulary/ORBvoc.txt Examples/Monocular/KITTI00-02.yaml

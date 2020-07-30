@@ -1,0 +1,7 @@
+01 orb_slam 50hz遍历 单位百分比
+trans error max:  5.712124177840817
+trans error mean:  1.8012920493510838
+trans error median:  1.816146789014928
+rot error max:  3.0460586856022625
+rot error mean:  0.20805669997003895
+rot error median:  0.08197893694131134

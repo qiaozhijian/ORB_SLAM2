@@ -28,10 +28,13 @@ namespace ORB_SLAM2{
 
         fSettings["Tc_odo"] >> mTc_odo;
 
+        mVelocityCam = cv::Mat();
+        mVelocity = cv::Mat();
+
         mCurrentOdo.mTimestamp = -1.0;
         mLastOdo.mTimestamp = -1.0;
     }
-
+    // todo 加时间戳对齐和SE空间插值
     void Odometer:: UpdatePose(vector<OdoPose>& vOdoPose)
     {
         mnId = nNextId++;
@@ -39,9 +42,16 @@ namespace ORB_SLAM2{
         {
             OdoPose m = vOdoPose.back();
             mCurrentOdo = OdoPose(vOdoPose.back());
+        } else
+        {
+            mVelocity = cv::Mat();
+            mVelocityCam = cv::Mat();
+            mCurrentOdo.mTimestamp = -1.0;
+            mLastOdo.mTimestamp = -1.0;
+            return;
         }
 
-        if (mLastOdo.mTimestamp > 0.0) {
+        if (mLastOdo.mTimestamp > 0.0 && mCurrentOdo.mTimestamp > 0.0) {
             cv::Mat CurTow = Converter::toCvMatInverse(mCurrentOdo.mTwo);
             mVelocity = CurTow * mLastOdo.mTwo;
             {
@@ -71,7 +81,8 @@ namespace ORB_SLAM2{
 
     void Odometer:: RememberLast()
     {
-        mLastOdo = OdoPose(mCurrentOdo);
+        if(mCurrentOdo.mTimestamp>0.0)
+            mLastOdo = OdoPose(mCurrentOdo);
     }
 
 
