@@ -128,8 +128,8 @@ int main(int argc, char **argv)
     vector<ORB_SLAM2::IMU::Point> vImuMeas;
     for(int ni=0; ni<nImages; ni++)
     {
-        if(ni<frameNext)
-            continue;
+        //if(ni<frameNext)
+        //    continue;
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 #else
