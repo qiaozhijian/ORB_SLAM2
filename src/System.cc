@@ -109,6 +109,7 @@ namespace ORB_SLAM2 {
             mptViewer = new thread(&Viewer::Run, mpViewer);
             mpTracker->SetViewer(mpViewer);
         }
+        mpTracker->SetOdometer(mpOdo);
 
         //Set pointers between threads 三个线程之间通信
         mpTracker->SetLocalMapper(mpLocalMapper);

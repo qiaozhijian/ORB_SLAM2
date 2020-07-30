@@ -8,6 +8,8 @@
 
 namespace ORB_SLAM2{
 
+    long unsigned int Odometer::nNextId = 0;
+
     cv::Mat OdoPose::GetVelInCamera(cv::Mat Tc_odo)
     {
         cv::Mat T_odo = cv::Mat::eye(4, 4, CV_32F);
@@ -15,36 +17,57 @@ namespace ORB_SLAM2{
         T_odo.at<float>(1,3) = mxyz.y;
         T_odo.at<float>(2,3) = mxyz.z;
 
-        Converter::toCvMat((Eigen::Matrix3d)mQuatf.matrix()).copyTo(T_odo.rowRange(0,3).colRange(0,3));
-        cout<<mQuatf.matrix()<<endl;
-        cout<<T_odo<<endl;
+        Converter::toCvMat((Eigen::Matrix3f)mQuatf.matrix()).copyTo(T_odo.rowRange(0,3).colRange(0,3));
         
         cv::Mat Todo_c = Converter::toCvMatInverse(T_odo);
-        
-        
-
     }
 
     Odometer::Odometer(const string& strSettingPath)
     {
         cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
 
-        mTc_odo = fSettings["Tc_odo"].mat();
+        fSettings["Tc_odo"] >> mTc_odo;
+
+        mCurrentOdo.mTimestamp = -1.0;
+        mLastOdo.mTimestamp = -1.0;
     }
 
-    void Odometer:: UpdatePose(vector<OdoPose>& odoPose)
+    void Odometer:: UpdatePose(vector<OdoPose>& vOdoPose)
     {
         mnId = nNextId++;
-        mCurrentOdo = OdoPose(*odoPose.end());
+        if(!vOdoPose.empty())
+        {
+            OdoPose m = vOdoPose.back();
+            mCurrentOdo = OdoPose(vOdoPose.back());
+        }
 
-        if (mnId != 0) {
-            cv::Mat LastTwo = Converter::toCvMatInverse(mLastOdo.mTow);
-            mVelocity = mCurrentOdo.mTow * LastTwo;
+        if (mLastOdo.mTimestamp > 0.0) {
+            cv::Mat CurTow = Converter::toCvMatInverse(mCurrentOdo.mTwo);
+            mVelocity = CurTow * mLastOdo.mTwo;
+            {
+                unique_lock<mutex> lock(mMutexToc);
+                mVelocityCam = mTc_odo * mVelocity;
+                cv::Mat mTodo_c = Converter::toCvMatInverse(mTc_odo);
+                mVelocityCam = mVelocityCam * mTodo_c;
+            }
         } else
+        {
             mVelocity = cv::Mat();
-
-
+            mVelocityCam = cv::Mat();
+        }
     }
+    cv::Mat Odometer:: GetTc_odo()
+    {
+        unique_lock<mutex> lock(mMutexToc);
+        return mTc_odo;
+    }
+
+    void Odometer:: SetTc_odo(cv::Mat mat)
+    {
+        unique_lock<mutex> lock(mMutexToc);
+        mTc_odo = mat;
+    }
+
 
     void Odometer:: RememberLast()
     {

@@ -20,6 +20,7 @@
 
 
 #include "Converter.h"
+#include "opencv2/core/eigen.hpp"
 
 namespace ORB_SLAM2 {
 
@@ -65,6 +66,15 @@ namespace ORB_SLAM2 {
     }
 
     cv::Mat Converter::toCvMat(const Eigen::Matrix3d &m) {
+        cv::Mat cvMat(3, 3, CV_32F);
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                cvMat.at<float>(i, j) = m(i, j);
+
+        return cvMat.clone();
+    }
+
+    cv::Mat Converter::toCvMat(const Eigen::Matrix3f &m) {
         cv::Mat cvMat(3, 3, CV_32F);
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
@@ -144,6 +154,15 @@ namespace ORB_SLAM2 {
         twc.copyTo(Twc.rowRange(0,3).col(3));
 
         return Twc.clone();
+    }
+
+    Eigen::Vector3f Converter:: RotToEuler(const cv::Mat &R)
+    {
+        Eigen::Matrix3f eigenR;
+
+        cv::cv2eigen(R,eigenR);
+
+        return eigenR.eulerAngles(2, 1, 0) / M_PI * 180.f;
     }
 
 } //namespace ORB_SLAM

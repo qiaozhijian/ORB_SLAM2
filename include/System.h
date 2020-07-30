@@ -40,7 +40,7 @@
 #include "odometer.h"
 
 #define CLOSE_LOOP false
-#define SPEED_UP 5
+#define SPEED_UP 2
 
 namespace ORB_SLAM2
 {
@@ -51,6 +51,8 @@ class Map;
 class Tracking;
 class LocalMapping;
 class LoopClosing;
+class Odometer;
+class OdoPose;
 
 class System
 {
@@ -90,6 +92,8 @@ public:
 
     void UpdateRobot(vector<ORB_SLAM2::IMU::Point> vImuMeas, vector<ORB_SLAM2::OdoPose> vOdoPoseMeas)
     {
+        mvImuMeas.clear();
+        mvOdoPoseMeas.clear();
         mvImuMeas = vImuMeas;
         mvOdoPoseMeas = vOdoPoseMeas;
     }

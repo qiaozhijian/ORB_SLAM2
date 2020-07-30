@@ -48,7 +48,7 @@ namespace ORB_SLAM2 {
     Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Map *pMap,
                        KeyFrameDatabase *pKFDB, const string &strSettingPath, const int sensor) :
             mState(NO_IMAGES_YET), mSensor(sensor), mbOnlyTracking(false), mbVO(false), mpORBVocabulary(pVoc),
-            mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer *>(NULL)), mpSystem(pSys), mpViewer(NULL),
+            mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer *>(NULL)), mpSystem(pSys), mpViewer(NULL),mpOdo(NULL),
             mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0) {
         // Load camera parameters from settings file
         cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
@@ -88,6 +88,8 @@ namespace ORB_SLAM2 {
         cout << "mUndistY size = " << mUndistYMono.size() << endl;
 
         mbf = fSettings["Camera.bf"];
+        float scale = fSettings["Camera.scale"];
+        mbf = mbf* scale;
 
         float fps = fSettings["Camera.fps"];
         fps = fps / SPEED_UP;
@@ -170,6 +172,9 @@ namespace ORB_SLAM2 {
         mpViewer = pViewer;
     }
 
+    void Tracking::SetOdometer(Odometer *pOdo) {
+        mpOdo = pOdo;
+    }
 
     cv::Mat Tracking::GrabImageStereo(long unsigned int ni, const cv::Mat &imRectLeft, const cv::Mat &imRectRight,
                                       const double &timestamp) {
@@ -359,8 +364,27 @@ namespace ORB_SLAM2 {
                     mLastFrame.GetRotationInverse().copyTo(LastTwc.rowRange(0, 3).colRange(0, 3));
                     mLastFrame.GetCameraCenter().copyTo(LastTwc.rowRange(0, 3).col(3));
                     mVelocity = mCurrentFrame.mTcw * LastTwc;
+
+                    if(false) //debug
+                    {
+                        Eigen::Vector3f euler = Converter::RotToEuler(mVelocity.rowRange(0, 3).colRange(0, 3));
+                        cv::Mat trans = mVelocity.rowRange(0, 3).col(3);
+                        cout<<"euler: "<<euler.transpose()<<"\ttrans: "<<trans.t()<<endl;
+                        if(!mpOdo->mVelocityCam.empty())
+                        {
+                            Eigen::Vector3f euler_o = Converter::RotToEuler(mpOdo->mVelocityCam.rowRange(0, 3).colRange(0, 3));
+                            cv::Mat trans_o = mpOdo->mVelocityCam.rowRange(0, 3).col(3);
+                            cout<<"euler_o: "<<euler_o.transpose()<<"\ttrans_o: "<<trans_o.t()<<endl;
+                        }
+                    }
+
                 } else
-                    mVelocity = cv::Mat();
+                {
+                    if(!mpOdo->mVelocityCam.empty())
+                        mVelocity = mpOdo->mVelocityCam;
+                    else
+                        mVelocity = cv::Mat();
+                }
 
                 mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
 
@@ -508,7 +532,10 @@ namespace ORB_SLAM2 {
 //    检测特征点数量大于500
         if (mCurrentFrame.N > 500) {
             // Set Frame pose to the origin
-            mCurrentFrame.SetPose(mVelocity * mLastFrame.mTcw);
+            if(mpOdo->mVelocityCam.empty())
+                mCurrentFrame.SetPose(mVelocity * mLastFrame.mTcw);
+            else
+                mCurrentFrame.SetPose(mpOdo->mVelocityCam * mLastFrame.mTcw);
 
             CreateNewKeyFrame();
 

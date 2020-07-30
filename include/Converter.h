@@ -42,6 +42,7 @@ public:
     static cv::Mat toCvMat(const g2o::Sim3 &Sim3);
     static cv::Mat toCvMat(const Eigen::Matrix<double,4,4> &m);
     static cv::Mat toCvMat(const Eigen::Matrix3d &m);
+    static cv::Mat toCvMat(const Eigen::Matrix3f &m);
     static cv::Mat toCvMat(const Eigen::Matrix<double,3,1> &m);
     static cv::Mat toCvSE3(const Eigen::Matrix<double,3,3> &R, const Eigen::Matrix<double,3,1> &t);
 
@@ -52,6 +53,8 @@ public:
     static std::vector<float> toQuaternion(const cv::Mat &M);
 
     static cv::Mat toCvMatInverse(const cv::Mat &Tcw);
+
+    static Eigen::Vector3f RotToEuler(const cv::Mat &R);
 };
 
 }// namespace ORB_SLAM

@@ -13,16 +13,25 @@
 #include <unistd.h>
 #include "Tracking.h"
 #include <mutex>
+#include "Converter.h"
 
 
 namespace ORB_SLAM2 {
 
     class OdoPose {
+    public:
+        cv::Mat mTwo;
+
+        Eigen::Quaternionf mQuatf;
+
+        cv::Point3f mxyz;
+
+        double mTimestamp;
 
     public:
         OdoPose(){}
 
-        OdoPose(OdoPose pose):mQuatf(pose.mQuatf), mxyz(pose.mxyz), mTimestamp(pose.mTimestamp){}
+        OdoPose(const OdoPose& pose):mQuatf(pose.mQuatf), mxyz(pose.mxyz), mTimestamp(pose.mTimestamp), mTwo(pose.mTwo){}
 
         OdoPose(const float &odo_x, const float &odo_y, const float &odo_z, const float &qx, const float &qy,
                 const float &qz, const float &qw, const double &timestamp) {
@@ -31,28 +40,18 @@ namespace ORB_SLAM2 {
             mxyz = cv::Point3f(odo_x,odo_y,odo_z);
             mTimestamp = timestamp;
 
-            mTow.at<float>(0,3) = mxyz.x;
-            mTow.at<float>(1,3) = mxyz.y;
-            mTow.at<float>(2,3) = mxyz.z;
+            mTwo = cv::Mat::eye(4, 4, CV_32F);
+            mTwo.at<float>(0,3) = mxyz.x;
+            mTwo.at<float>(1,3) = mxyz.y;
+            mTwo.at<float>(2,3) = mxyz.z;
 
-            Converter::toCvMat((Eigen::Matrix3d)mQuatf.matrix()).copyTo(mTow.rowRange(0,3).colRange(0,3));
-            //cout<<mQuatf.matrix()<<endl;
-            //cout<<mTow<<endl;
+            Converter::toCvMat((Eigen::Matrix3f)mQuatf.matrix()).copyTo(mTwo.rowRange(0,3).colRange(0,3));
         }
 
         cv::Mat GetVelInCamera(cv::Mat Tc_odo);
-
-        cv::Mat mTow;
-
-        Eigen::Quaternionf mQuatf;
-
-        cv::Point3f mxyz;
-
-        double mTimestamp;
     };
 
     class Odometer {
-
     public:
         Odometer() {};
 
@@ -69,7 +68,6 @@ namespace ORB_SLAM2 {
         float mOdo_z;
 
         // Odometer pose.
-        cv::Mat mTow;
         cv::Mat mTwo;
 
         cv::Mat mTc_odo;
@@ -79,13 +77,19 @@ namespace ORB_SLAM2 {
 
         //Motion Model
         cv::Mat mVelocity;
+        cv::Mat mVelocityCam;
+
+        static long unsigned int nNextId;
 
         long unsigned int mnId;
-        static long unsigned int nNextId = 0;
+
+        std::mutex mMutexToc;
+
     public:
         void UpdatePose(vector<OdoPose>& odoPose);
         void RememberLast();
-
+        cv::Mat GetTc_odo();
+        void SetTc_odo(cv::Mat mat);
     };
 }
 

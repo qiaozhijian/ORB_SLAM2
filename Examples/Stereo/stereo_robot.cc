@@ -80,7 +80,6 @@ int main(int argc, char **argv)
 
     // Read rectification parameters
     cv::FileStorage fsSettings(argv[2], cv::FileStorage::READ);
-
     if(!fsSettings.isOpened())
     {
         cerr << "ERROR: Wrong path to settings" << endl;
@@ -364,7 +363,7 @@ void LoadOdoPose(const string &strImuPath, vector<double> &vTimeStamps, vector<O
             data[ODO_TXT_LEN - 1] = stod(item);
 
             vTimeStamps.push_back(data[0]);
-            vOdoPose.push_back(ORB_SLAM2::OdoPose(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]));
+            vOdoPose.push_back(ORB_SLAM2::OdoPose( data[1], data[2], data[3], data[4], data[5], data[6], data[7],data[0]));
         }
     }
     cout << "Finish LoadOdo: " << vTimeStamps.size() << endl;

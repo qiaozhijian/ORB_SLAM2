@@ -37,7 +37,7 @@
 #include "Initializer.h"
 #include "MapDrawer.h"
 #include "System.h"
-
+#include "odometer.h"
 #include <mutex>
 
 namespace ORB_SLAM2
@@ -49,6 +49,7 @@ class Map;
 class LocalMapping;
 class LoopClosing;
 class System;
+class Odometer;
 
 class Tracking
 {  
@@ -65,7 +66,7 @@ public:
     void SetLocalMapper(LocalMapping* pLocalMapper);
     void SetLoopClosing(LoopClosing* pLoopClosing);
     void SetViewer(Viewer* pViewer);
-
+    void SetOdometer(Odometer *pOdo);
     // Load new settings
     // The focal lenght should be similar or scale prediction will fail when projecting points
     // TODO: Modify MapPoint::PredictScale to take into account focal lenght
@@ -192,6 +193,8 @@ protected:
     
     // System
     System* mpSystem;
+
+    Odometer* mpOdo;
     
     //Drawers
     Viewer* mpViewer;
