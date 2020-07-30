@@ -1000,7 +1000,10 @@ namespace ORB_SLAM2 {
         // Create "visual odometry" points if in Localization Mode
         UpdateLastFrame();
 
-        mCurrentFrame.SetPose(mVelocity * mLastFrame.mTcw);
+        if(!mpOdo->mVelocityCam.empty())
+            mCurrentFrame.SetPose(mpOdo->mVelocityCam * mLastFrame.mTcw);
+        else
+            mCurrentFrame.SetPose(mVelocity * mLastFrame.mTcw);
 
         fill(mCurrentFrame.mvpMapPoints.begin(), mCurrentFrame.mvpMapPoints.end(), static_cast<MapPoint *>(NULL));
 

@@ -23,19 +23,26 @@ def main(args):
     est_xyz = numpy.asarray([[float(value) * float(args.scale) for value in args.est_traj[b][0:3]] for a, b in matches])
     est_quat = numpy.asarray([[float(value) for value in args.est_traj[b][3:]] for a, b in matches])
 
-    plot_slam_eval(est_stamps, est_xyz, gt_stamps, gt_xyz)
+    # plot_slam_eval(est_stamps, est_xyz, gt_stamps, gt_xyz)
 
     trans_err_list, rot_err_list = evo_ape(est_xyz, est_quat,gt_xyz,gt_quat)
     # plot_seq(trans_err_list)
     trans_err_mean, trans_err_max, trans_err_median, rot_err_mean, rot_err_max, rot_err_median = evo_statics(
         trans_err_list, rot_err_list)
 
-    print("trans error max: ", trans_err_max)
-    print("trans error mean: ", trans_err_mean)
-    print("trans error median: ", trans_err_median)
-    print("rot error max: ", rot_err_max)
-    print("rot error mean: ", rot_err_mean)
-    print("rot error median: ", rot_err_median)
+    # print("trans error max: ", trans_err_max)
+    # print("trans error mean: ", trans_err_mean)
+    # print("trans error median: ", trans_err_median)
+    # print("rot error max: ", rot_err_max)
+    # print("rot error mean: ", rot_err_mean)
+    # print("rot error median: ", rot_err_median)
+
+    print(trans_err_max)
+    print(trans_err_mean)
+    print(trans_err_median)
+    print(rot_err_max)
+    print(rot_err_mean)
+    print(rot_err_median)
 
 
 if __name__ == "__main__":
@@ -45,7 +52,7 @@ if __name__ == "__main__":
                         default="")
     parser.add_argument('--est_path', help='est_path trajectory (format: timestamp tx ty tz qx qy qz qw)', default="")
     parser.add_argument('--scale', help='scaling factor for the second trajectory (default: 1.0)', default=1.0)
-    parser.add_argument('--seq', type=str, default="01")
+    parser.add_argument('--seq', type=str, default="03")
     parser.add_argument('--slam', type=str, default='orb')
     parser.add_argument('--type_slam', type=str, default='slam')
     parser.add_argument('--suffix', type=str, default="")
@@ -61,6 +68,9 @@ if __name__ == "__main__":
     parser.add_argument('--verbose',
                         help='print all evaluation data (otherwise, only the RMSE absolute translational error in meters after alignment will be printed)',
                         action='store_true')
+    parser.add_argument('--odometry',
+                        help='print all evaluation data (otherwise, only the RMSE absolute translational error in meters after alignment will be printed)',
+                        action='store_true')
     args = parser.parse_args()
 
     if args.scaleAlign:
@@ -69,28 +79,29 @@ if __name__ == "__main__":
         args.suffix = args.suffix + " -va"
 
     path = '/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round3/{}'.format(args.seq)
-    if args.est_path == "":
-        args.est_path = os.path.join(path, "robot{}_{}_stereo_{}.txt").format(args.seq, args.slam, args.type_slam)
     if args.gt_path == "":
         args.gt_path = os.path.join(path, "vicon_{}.txt".format(args.seq))
-    # args.gt_path = os.path.join(path, "odometry.txt")
+    if args.odometry:
+        args.est_path = os.path.join(path, "odometry.txt")
+    elif args.est_path == "":
+        args.est_path = os.path.join(path, "robot{}_{}_stereo_{}.txt").format(args.seq, args.slam, args.type_slam)
 
     args.gt_traj = np.loadtxt(args.gt_path)
     args.est_traj = np.loadtxt(args.est_path)
 
-    args.est_traj[:, 1:4] = args.est_traj[:, 1:4] * args.scale
-
-    args.est_traj = trans_robot_slam(args.est_traj)
-    eval_name = args.est_path[:-4] + "_BodyFrame.txt"
-    saveTum(eval_name, args.est_traj)
+    if not args.odometry:
+        args.est_traj[:, 1:4] = args.est_traj[:, 1:4] * args.scale
+        args.est_traj = trans_robot_slam(args.est_traj)
+        # eval_name = args.est_path[:-4] + "_BodyFrame.txt"
+        # saveTum(eval_name, args.est_traj)
+    else:
+        args.est_traj = trans_robot_odometry(args.est_traj)
+        # eval_name = args.est_path[:-4] + "_BodyFrame.txt"
+        # saveTum(eval_name, args.est_traj)
 
     args.gt_traj = trans_robot_vicon(args.gt_traj)
-    gt_file_new = args.gt_path[:-4] + "_BodyFrame.txt"
-    saveTum(gt_file_new, args.gt_traj)
-
-    # args.gt_traj = trans_robot_odometry(args.gt_traj)
-    # odo_file_new = odometryTxt[:-4] + "_BodyFrame.txt"
-    # saveTum(odo_file_new, odometryTraj)
+    # gt_file_new = args.gt_path[:-4] + "_BodyFrame.txt"
+    # saveTum(gt_file_new, args.gt_traj)
 
     args.est_traj = npToDict(args.est_traj)
     args.gt_traj = npToDict(args.gt_traj)
