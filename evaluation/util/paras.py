@@ -15,6 +15,11 @@ T_robot_c0 = np.linalg.inv(T_c0_robot)
 T_odo_robot = np.dot(T_odo_imu, np.dot(T_imu_c0, T_c0_robot))
 T_robot_odo = np.linalg.inv(T_odo_robot)
 
+T_odo_c0 = np.dot(T_odo_imu, T_imu_c0)
+T_c0_odo = np.linalg.inv(T_odo_c0)
+# print(T_odo_c0.reshape(-1))
+# print(T_c0_odo.reshape(-1))
+
 
 def trans_robot_slam(slamTraj):
     num, _ = slamTraj.shape
@@ -111,3 +116,17 @@ def getUsefulPart(traj, vicon=False):
     traj = traj[:endIdx2]
 
     return traj, endIdx1, endIdx2
+
+if __name__ == "__main__":
+    T0 = np.eye(3)
+
+    T_o1_o2 = np.asarray([0,-1,0,1,0,0,0,0,1]).reshape(3,3)
+    T_c1_c2 = np.asarray([0,-1,-1,1,0,1,0,0,1]).reshape(3,3)
+    T_o_c = np.asarray([1,0,1,0,1,0,0,0,1]).reshape(3,3)
+    T_c_o = np.linalg.inv(T_o_c)
+
+    print("T_c1_c2",'\n',T_c1_c2)
+    T_c1_c2_ = np.dot(np.dot(T_o_c,T_o1_o2),T_c_o)
+    print("T_c1_c2_",'\n',T_c1_c2_)
+    T_c1_c2_ = np.dot(np.dot(T_c_o,T_o1_o2),T_o_c)
+    print("T_c1_c2_",'\n',T_c1_c2_)

@@ -71,7 +71,7 @@ if __name__ == "__main__":
         args.est_path = os.path.join(path, "robot{}_{}_stereo_{}.txt").format(args.seq, args.slam, args.type_slam)
     if args.gt_path=="":
         args.gt_path = os.path.join(path, "vicon_{}.txt".format(args.seq))
-    # args.gt_path = os.path.join(path, "odometry{}.txt".format(args.seq))
+    # args.gt_path = os.path.join(path, "odometry.txt")
 
     args.gt_traj = np.loadtxt(args.gt_path)
     args.est_traj = np.loadtxt(args.est_path)

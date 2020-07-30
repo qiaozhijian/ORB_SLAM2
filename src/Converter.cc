@@ -132,4 +132,18 @@ namespace ORB_SLAM2 {
         return v;
     }
 
+    cv::Mat Converter::toCvMatInverse(const cv::Mat &Tcw)
+    {
+        cv::Mat Rcw = Tcw.rowRange(0,3).colRange(0,3);
+        cv::Mat tcw = Tcw.rowRange(0,3).col(3);
+        cv::Mat Rwc = Rcw.t();
+        cv::Mat twc = -Rwc*tcw;
+
+        cv::Mat Twc = cv::Mat::eye(4,4,Tcw.type());
+        Rwc.copyTo(Twc.rowRange(0,3).colRange(0,3));
+        twc.copyTo(Twc.rowRange(0,3).col(3));
+
+        return Twc.clone();
+    }
+
 } //namespace ORB_SLAM

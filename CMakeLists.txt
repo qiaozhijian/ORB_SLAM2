@@ -82,6 +82,7 @@ src/Sim3Solver.cc
 src/Initializer.cc
 src/Viewer.cc
         src/util.cpp
+        src/odometer.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

@@ -26,6 +26,7 @@
 #include <pangolin/pangolin.h>
 #include <iomanip>
 #include "util.h"
+#include "odometer.h"
 
 namespace ORB_SLAM2 {
 
@@ -87,6 +88,8 @@ namespace ORB_SLAM2 {
         //(it will live in the main thread of execution, the one that called this constructor)main主线程
         mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
                                  mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
+
+        mpOdo = new Odometer(strSettingsFile);
 
         //Initialize the Local Mapping thread and launch
         mpLocalMapper = new LocalMapping(mpMap, mSensor == MONOCULAR);
@@ -200,8 +203,11 @@ namespace ORB_SLAM2 {
                 mbReset = false;
             }
         }
+
+        mpOdo->UpdatePose(mvOdoPoseMeas);
 //  当前帧相机姿态 世界坐标系到相机坐标坐标系的变换矩阵 Tcw
         cv::Mat Tcw = mpTracker->GrabImageStereo(ni, imLeft, imRight, timestamp);
+        mpOdo->RememberLast();
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;

@@ -35,6 +35,9 @@
 #include "KeyFrameDatabase.h"
 #include "ORBVocabulary.h"
 #include "Viewer.h"
+#include "odometer.h"
+#include "ImuTypes.h"
+#include "odometer.h"
 
 #define CLOSE_LOOP false
 #define SPEED_UP 5
@@ -59,6 +62,9 @@ public:
         RGBD=2
     };
 
+    vector<ORB_SLAM2::IMU::Point> mvImuMeas;
+    vector<ORB_SLAM2::OdoPose> mvOdoPoseMeas;
+
     int mni;
 
 public:
@@ -82,6 +88,11 @@ public:
     // Returns the camera pose (empty if tracking fails).
     cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp);
 
+    void UpdateRobot(vector<ORB_SLAM2::IMU::Point> vImuMeas, vector<ORB_SLAM2::OdoPose> vOdoPoseMeas)
+    {
+        mvImuMeas = vImuMeas;
+        mvOdoPoseMeas = vOdoPoseMeas;
+    }
     // This stops local mapping thread (map building) and performs only camera tracking.
     void ActivateLocalizationMode();
     // This resumes local mapping thread and performs SLAM again.
@@ -140,6 +151,8 @@ private:
 
     // Map structure that stores the pointers to all KeyFrames and MapPoints.
     Map* mpMap;
+
+    Odometer* mpOdo;
 
     // Tracker. It receives a frame and computes the associated camera pose.
     // It also decides when to insert a new keyframe, create some new MapPoints and
