@@ -11,6 +11,7 @@ Examples/ROS/ORB_SLAM2/Stereo
 Examples/ROS/ORB_SLAM2/build/
 Examples/Stereo/stereo_euroc
 Examples/Stereo/stereo_kitti
+Examples/Stereo/stereo_robot
 KeyFrameTrajectory.txt
 Thirdparty/DBoW2/build/
 Thirdparty/DBoW2/lib/
@@ -38,3 +39,4 @@ Examples/ROS/ORB_SLAM2/.fuse*
 *vo.txt
 *.tum
 *.pyc
+__pycache__/

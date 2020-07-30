@@ -44,8 +44,8 @@ trajectory and the estimated trajectory.
 import sys
 import numpy
 import argparse
-import associate
-from plot_self import plot_traj
+from util import associate
+from util.plot_self import plot_traj
 
 
 def align(model, data):
@@ -62,8 +62,8 @@ def align(model, data):
     """
 
     numpy.set_printoptions(precision=3, suppress=True)
-    model_zerocentered = model - model.mean(1,keepdims=True)
-    data_zerocentered = data - data.mean(1,keepdims=True)
+    model_zerocentered = model - model.mean(1, keepdims=True)
+    data_zerocentered = data - data.mean(1, keepdims=True)
 
     W = numpy.zeros((3, 3))
     for column in range(model.shape[1]):
@@ -85,8 +85,8 @@ def align(model, data):
 
     s = float(dots / norms)
 
-    transGT = data.mean(1,keepdims=True) - s * numpy.dot(rot, model).mean(1,keepdims=True)
-    trans = data.mean(1,keepdims=True) - numpy.dot(rot, model).mean(1,keepdims=True)
+    transGT = data.mean(1, keepdims=True) - s * numpy.dot(rot, model).mean(1, keepdims=True)
+    trans = data.mean(1, keepdims=True) - numpy.dot(rot, model).mean(1, keepdims=True)
 
     model_alignedGT = s * numpy.dot(rot, model) + transGT
     model_aligned = numpy.dot(rot, model) + trans
@@ -98,7 +98,6 @@ def align(model, data):
     trans_error = numpy.sqrt(numpy.sum(numpy.multiply(alignment_error, alignment_error), 0))
 
     return rot, transGT, trans_errorGT, trans, trans_error, s
-
 
 
 if __name__ == "__main__":
@@ -114,9 +113,10 @@ if __name__ == "__main__":
     parser.add_argument('--max_difference',
                         help='maximally allowed time difference for matching entries (default: 0.02 s)',
                         default=0.02)
-    parser.add_argument('--save', help='save aligned second trajectory to disk (format: stamp2 x2 y2 z2)',default=True)
+    parser.add_argument('--save', help='save aligned second trajectory to disk (format: stamp2 x2 y2 z2)', default=True)
     parser.add_argument('--save_associations',
-                        help='save associated first and aligned second trajectory to disk (format: stamp1 x1 y1 z1 stamp2 x2 y2 z2)',default="eval")
+                        help='save associated first and aligned second trajectory to disk (format: stamp1 x1 y1 z1 stamp2 x2 y2 z2)',
+                        default="eval")
     parser.add_argument('--plot', help='plot the first and the aligned second trajectory to an image (format: png)')
     parser.add_argument('--verbose',
                         help='print all evaluation data (otherwise, only the RMSE absolute translational error in meters after alignment will be printed)',
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     second_xyz = numpy.asarray(
         [[float(value) * float(args.scale) for value in second_list[b][0:3]] for a, b in matches]).transpose()
 
-    dictionary_items = second_list.items() #原始的被估计轨迹
+    dictionary_items = second_list.items()  # 原始的被估计轨迹
     sorted_second_list = sorted(dictionary_items)
     # 获取整个轨迹
     second_xyz_full = numpy.asarray(
@@ -147,9 +147,9 @@ if __name__ == "__main__":
 
     rot, transGT, trans_errorGT, trans, trans_error, scale = align(second_xyz, first_xyz)
     # 仿射变换
-    second_xyz_aligned = scale * numpy.dot(rot,  second_xyz) + trans
-    second_xyz_notscaled = numpy.dot(rot,  second_xyz) + trans
-    second_xyz_notscaled_full = numpy.dot(rot,  second_xyz_full) + trans
+    second_xyz_aligned = scale * numpy.dot(rot, second_xyz) + trans
+    second_xyz_notscaled = numpy.dot(rot, second_xyz) + trans
+    second_xyz_notscaled_full = numpy.dot(rot, second_xyz_full) + trans
 
     first_stamps = list(first_list.keys())
     first_stamps.sort()
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     second_stamps.sort()
     second_xyz_full = numpy.asarray(
         [[float(value) * float(args.scale) for value in second_list[b][0:3]] for b in second_stamps]).transpose()
-    second_xyz_full_aligned = scale * numpy.dot(rot,  second_xyz_full) + trans
+    second_xyz_full_aligned = scale * numpy.dot(rot, second_xyz_full) + trans
 
     if args.verbose:
         print("compared_pose_pairs %d pairs" % (len(trans_error)))
@@ -202,8 +202,6 @@ if __name__ == "__main__":
             import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
-        import matplotlib.pylab as pylab
-        from matplotlib.patches import Ellipse
 
         fig = plt.figure()
         ax = fig.add_subplot(111)

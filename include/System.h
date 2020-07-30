@@ -35,8 +35,11 @@
 #include "KeyFrameDatabase.h"
 #include "ORBVocabulary.h"
 #include "Viewer.h"
+#include "odometer.h"
+#include "ImuTypes.h"
+#include "odometer.h"
 
-#define CLOSE_LOOP false
+#define CLOSE_LOOP true
 #define SPEED_UP 1
 
 namespace ORB_SLAM2
@@ -48,6 +51,8 @@ class Map;
 class Tracking;
 class LocalMapping;
 class LoopClosing;
+class Odometer;
+class OdoPose;
 
 class System
 {
@@ -59,6 +64,11 @@ public:
         RGBD=2
     };
 
+    vector<ORB_SLAM2::IMU::Point> mvImuMeas;
+    vector<ORB_SLAM2::OdoPose> mvOdoPoseMeas;
+
+    int mni;
+
 public:
 
     // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
@@ -67,7 +77,7 @@ public:
     // Proccess the given stereo frame. Images must be synchronized and rectified.
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
     // Returns the camera pose (empty if tracking fails).
-    cv::Mat TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp);
+    cv::Mat TrackStereo(long unsigned int ni, const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp);
 
     // Process the given rgbd frame. Depthmap must be registered to the RGB frame.
     // Input image: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
@@ -80,6 +90,13 @@ public:
     // Returns the camera pose (empty if tracking fails).
     cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp);
 
+    void UpdateRobot(vector<ORB_SLAM2::IMU::Point> vImuMeas, vector<ORB_SLAM2::OdoPose> vOdoPoseMeas)
+    {
+        mvImuMeas.clear();
+        mvOdoPoseMeas.clear();
+        mvImuMeas = vImuMeas;
+        mvOdoPoseMeas = vOdoPoseMeas;
+    }
     // This stops local mapping thread (map building) and performs only camera tracking.
     void ActivateLocalizationMode();
     // This resumes local mapping thread and performs SLAM again.
@@ -138,6 +155,8 @@ private:
 
     // Map structure that stores the pointers to all KeyFrames and MapPoints.
     Map* mpMap;
+
+    Odometer* mpOdo;
 
     // Tracker. It receives a frame and computes the associated camera pose.
     // It also decides when to insert a new keyframe, create some new MapPoints and

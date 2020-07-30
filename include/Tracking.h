@@ -37,7 +37,7 @@
 #include "Initializer.h"
 #include "MapDrawer.h"
 #include "System.h"
-
+#include "odometer.h"
 #include <mutex>
 
 namespace ORB_SLAM2
@@ -49,6 +49,7 @@ class Map;
 class LocalMapping;
 class LoopClosing;
 class System;
+class Odometer;
 
 class Tracking
 {  
@@ -58,14 +59,14 @@ public:
              KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor);
 
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
-    cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
+    cv::Mat GrabImageStereo(long unsigned int ni, const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
     cv::Mat GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp);
     cv::Mat GrabImageMonocular(const cv::Mat &im, const double &timestamp);
 
     void SetLocalMapper(LocalMapping* pLocalMapper);
     void SetLoopClosing(LoopClosing* pLoopClosing);
     void SetViewer(Viewer* pViewer);
-
+    void SetOdometer(Odometer *pOdo);
     // Load new settings
     // The focal lenght should be similar or scale prediction will fail when projecting points
     // TODO: Modify MapPoint::PredictScale to take into account focal lenght
@@ -75,7 +76,7 @@ public:
     void InformOnlyTracking(const bool &flag);
     bool DebugPointVO(Frame frame);
     void visualPointMatch(string s="visual");
-
+    void OutputCurrentMapPoints(string s = "");
 
 public:
 
@@ -85,15 +86,18 @@ public:
         NO_IMAGES_YET=0,
         NOT_INITIALIZED=1,
         OK=2,
-        LOST=3
+        LOST=3,
+        INITIALIZED_AGAIN=4
     };
 
     // Tracking states
     enum eTrackingMode{
         TRACK_REFERENCE=0,
         TRACK_MOTION_MODEL=1,
-        TRACK_LOCAL_MAP=2,
-        TRACK_REFERENCE_AFTER_MOTION=3
+        TRACK_REFERENCE_AFTER_MOTION=2,
+        TRACK_LOCAL_MAP_AFTER_MOTION=3,
+        TRACK_LOCAL_MAP_AFTER_REFERENCE=4,
+        TRACK_LOCAL_MAP_AFTER_REFERENCE_AFTER_MOTION=5
     };
 
     eTrackingState mState;
@@ -106,6 +110,7 @@ public:
 
     // Current Frame
     Frame mCurrentFrame;
+    Frame mCurrentFrameCandi;
     cv::Mat mImGray;
     cv::Mat mImKFGray;
 
@@ -135,6 +140,7 @@ protected:
 
     // Map initialization for stereo and RGB-D
     void StereoInitialization();
+    void StereoInitializationAgain();
 
     // Map initialization for monocular
     void MonocularInitialization();
@@ -153,6 +159,8 @@ protected:
 
     bool TrackLocalMap();
     void SearchLocalPoints();
+
+    void PredictCurrentFrame();
 
     bool NeedNewKeyFrame();
     void CreateNewKeyFrame();
@@ -185,6 +193,8 @@ protected:
     
     // System
     System* mpSystem;
+
+    Odometer* mpOdo;
     
     //Drawers
     Viewer* mpViewer;

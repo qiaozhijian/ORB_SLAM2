@@ -32,8 +32,10 @@
 #include"ImuTypes.h"
 
 using namespace std;
-void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro, vector<cv::Point3f> &vOdo);
+void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro);
 void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps);
+void LoadOdoPose(const string &strImuPath, vector<double> &vTimeStamps, vector<ORB_SLAM2::OdoPose>& vOdoPose);
+void CheckImage(const cv::Mat& imLeftRect, const cv::Mat& imRightRect);
 ofstream staticsFile("./output/"+string("statics_temp.txt"));
 int main(int argc, char **argv)
 {
@@ -46,9 +48,12 @@ int main(int argc, char **argv)
     vector<string> vstrImageLeft;
     vector<string> vstrImageRight;
     vector<double> vTimeStamp;
-    vector<cv::Point3f> vAcc, vGyro, vOdo;
+    vector<cv::Point3f> vAcc, vGyro;
+    vector<ORB_SLAM2::OdoPose> vOdo;
     vector<double> vTimestampsImu;
+    vector<double> vTimestampsOdo;
     int first_imu = 0;
+    int first_odo = 0;
 
     string dataset_path = string(argv[3]);
     LoadImages(dataset_path, vstrImageLeft, vstrImageRight, vTimeStamp);
@@ -66,12 +71,16 @@ int main(int argc, char **argv)
 
     string pathImu = dataset_path + "/robot.txt";
     cout << "Loading IMU ";
-    LoadIMU(pathImu, vTimestampsImu, vAcc, vGyro, vOdo);
+    LoadIMU(pathImu, vTimestampsImu, vAcc, vGyro);
+    cout << "LOADED!" << endl;
+
+    string pathOdo = dataset_path + "/odometry.txt";
+    cout << "Loading Odometry ";
+    LoadOdoPose(pathOdo, vTimestampsOdo, vOdo);
     cout << "LOADED!" << endl;
 
     // Read rectification parameters
     cv::FileStorage fsSettings(argv[2], cv::FileStorage::READ);
-
     if(!fsSettings.isOpened())
     {
         cerr << "ERROR: Wrong path to settings" << endl;
@@ -126,6 +135,7 @@ int main(int argc, char **argv)
     double tframeInit = vTimeStamp[0];
     int frameNext = 0;
     vector<ORB_SLAM2::IMU::Point> vImuMeas;
+    vector<ORB_SLAM2::OdoPose> vOdoPoseMeas;
     for(int ni=0; ni<nImages; ni++)
     {
         //if(ni<frameNext)
@@ -138,55 +148,50 @@ int main(int argc, char **argv)
         // Read left and right images from file
         imLeft = cv::imread(vstrImageLeft[ni],CV_LOAD_IMAGE_UNCHANGED);
         imRight = cv::imread(vstrImageRight[ni],CV_LOAD_IMAGE_UNCHANGED);
-        if(imLeft.empty())
+
+        if(imLeft.empty() || imRight.empty())
         {
             cerr << endl << "Failed to load image at: "
                  << string(vstrImageLeft[ni]) << endl;
-            return 1;
-        }
-        //cv::imshow("imLeft",imLeft);
-        //cv::waitKey(0);
-
-        if(imRight.empty())
-        {
             cerr << endl << "Failed to load image at: "
                  << string(vstrImageRight[ni]) << endl;
             return 1;
         }
-        
+
 //         校正
         cv::remap(imLeft,imLeftRect,M1l,M2l,cv::INTER_LINEAR);
         cv::remap(imRight,imRightRect,M1r,M2r,cv::INTER_LINEAR);
-
-        //cv::Size imageSize(cols_l,rows_l);
-        //cv::Mat canvas(imageSize.height, imageSize.width * 2, CV_8UC3);
-        //cv::Mat canLeft = canvas(cv::Rect(0, 0, imageSize.width, imageSize.height));
-        //cv::Mat canRight = canvas(cv::Rect(imageSize.width, 0, imageSize.width, imageSize.height));
-        ////cout<<"canLeft: "<<imLeft.type()<<" canvas: "<<canvas.type()<<endl;
-        //imLeftRect(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canLeft);
-        //imRightRect(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canRight);
-        //for (int j = 0; j <= canvas.rows; j += 16)
-        //    cv::line(canvas, cv::Point(0, j), cv::Point(canvas.cols, j), cv::Scalar(0, 255, 0), 1, 8);
-        //cv::imshow("canvas",canvas);
-        //cv::waitKey(0);
+        //CheckImage(imLeftRect,imRightRect);
 
         double tframe = vTimeStamp[ni];
 
         // Load imu measurements from previous frame
         vImuMeas.clear();
-
+        vOdoPoseMeas.clear();
         if(ni>0)
-            while(vTimestampsImu[first_imu]<=vTimeStamp[ni]) // while(vTimestampsImu[first_imu]<=vTimestampsCam[ni])
+        {
+            while(first_imu<vTimestampsImu.size() && vTimestampsImu[first_imu]<=vTimeStamp[ni]) // while(vTimestampsImu[first_imu]<=vTimestampsCam[ni])
             {
                 vImuMeas.push_back(ORB_SLAM2::IMU::Point(vAcc[first_imu].x,vAcc[first_imu].y,vAcc[first_imu].z,
                                                          vGyro[first_imu].x,vGyro[first_imu].y,vGyro[first_imu].z,
                                                          vTimestampsImu[first_imu]));
                 first_imu++;
             }
+            while(first_odo<vTimestampsOdo.size() && vTimestampsOdo[first_odo]<=vTimeStamp[ni]) // while(vTimestampsOdo[first_odo]<=vTimestampsCam[ni])
+            {
+                vOdoPoseMeas.push_back(ORB_SLAM2::OdoPose(vOdo[first_odo].mxyz.x,vOdo[first_odo].mxyz.y,vOdo[first_odo].mxyz.z,
+                                                          vOdo[first_odo].mQuatf.x(),vOdo[first_odo].mQuatf.y(),vOdo[first_odo].mQuatf.z(),vOdo[first_odo].mQuatf.w(),
+                                                          vTimestampsOdo[first_odo]));
+                first_odo++;
+            }
+        }
 
+        SLAM.UpdateRobot(vImuMeas,vOdoPoseMeas);
+        //cout << "frame: " << ni << " ";
+        //SLAM.TrackStereo(ni, imLeftRect,imRightRect,tframe);
         cout << "frame: " << (ni + 1)*SPEED_UP-1 << " ";
+        SLAM.TrackStereo((ni + 1)*SPEED_UP-1, imLeftRect,imRightRect,tframe);
         // Pass the images to the SLAM system
-        SLAM.TrackStereo(imLeftRect,imRightRect,tframe);
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -208,16 +213,21 @@ int main(int argc, char **argv)
         double fromInit = std::chrono::duration_cast<std::chrono::duration<double> >(t_now - t_init).count();
         for(int niNext=ni; niNext<nImages; niNext++)
         {
-            double timePass = vTimeStamp[niNext] - tframeInit;
-            if(timePass<=fromInit)
-                frameNext = niNext;
-            else
-                break;
+            if(niNext<nImages)
+            {
+                double timePass = vTimeStamp[niNext] - tframeInit;
+                if(timePass<=fromInit)
+                    frameNext = niNext;
+                else
+                    break;
+            }
         }
+         cout << endl;
     }
-
+    cout<<"traverse all"<<endl;
     // Stop all threads
     SLAM.Shutdown();
+    cout<<"Shutdown all"<<endl;
 
     // Tracking time statistics
     sort(vTimesTrack.begin(),vTimesTrack.end());
@@ -238,6 +248,23 @@ int main(int argc, char **argv)
         SLAM.SaveTrajectoryTUM(file_prefix + string("orb_stereo_vo.txt"));
 
     return 0;
+}
+
+void CheckImage(const cv::Mat& imLeftRect, const cv::Mat& imRightRect)
+{
+    int cols_l = imLeftRect.cols;
+    int rows_l = imLeftRect.rows;
+    cv::Size imageSize(cols_l,rows_l);
+    cv::Mat canvas(imageSize.height, imageSize.width * 2, CV_8UC3);
+    cv::Mat canLeft = canvas(cv::Rect(0, 0, imageSize.width, imageSize.height));
+    cv::Mat canRight = canvas(cv::Rect(imageSize.width, 0, imageSize.width, imageSize.height));
+    //cout<<"canLeft: "<<imLeft.type()<<" canvas: "<<canvas.type()<<endl;
+    imLeftRect(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canLeft);
+    imRightRect(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canRight);
+    for (int j = 0; j <= canvas.rows; j += 16)
+        cv::line(canvas, cv::Point(0, j), cv::Point(canvas.cols, j), cv::Scalar(0, 255, 0), 1, 8);
+    cv::imshow("canvas",canvas);
+    cv::waitKey(0);
 }
 
 void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps)
@@ -311,14 +338,52 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
 
     cout<<"Finish LoadImages: "<<vstrImageLeft.size()<<endl;
 }
-void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro, vector<cv::Point3f> &vOdo)
+
+#define ODO_TXT_LEN 8
+void LoadOdoPose(const string &strImuPath, vector<double> &vTimeStamps, vector<ORB_SLAM2::OdoPose>& vOdoPose)
+{
+    ifstream fOdo;
+    fOdo.open(strImuPath.c_str());
+    vTimeStamps.reserve(5000);
+    vOdoPose.reserve(5000);
+
+    while(!fOdo.eof())
+    {
+        string s;
+        getline(fOdo,s);
+        if (s[0] == '#')
+            continue;
+
+        if(!s.empty()) {
+            string item;
+            size_t pos = 0;
+            double data[ODO_TXT_LEN];
+            int count = 0;
+            while ((pos = s.find(' ')) != string::npos) {
+                item = s.substr(0, pos);
+                data[count++] = stod(item);
+                s.erase(0, pos + 1);
+            }
+            item = s.substr(0, pos);
+            //字符串转浮点数
+            data[ODO_TXT_LEN - 1] = stod(item);
+
+            vTimeStamps.push_back(data[0]);
+            vOdoPose.push_back(ORB_SLAM2::OdoPose( data[1], data[2], data[3], data[4], data[5], data[6], data[7],data[0]));
+        }
+    }
+    cout << "Finish LoadOdo: " << vTimeStamps.size() << endl;
+}
+
+
+void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro)
 {
     ifstream fImu;
     fImu.open(strImuPath.c_str());
     vTimeStamps.reserve(5000);
     vAcc.reserve(5000);
     vGyro.reserve(5000);
-    vOdo.reserve(5000);
+    //vOdo.reserve(5000);
 
     while(!fImu.eof())
     {
@@ -344,7 +409,7 @@ void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::P
             vTimeStamps.push_back(data[0]);
             vGyro.push_back(cv::Point3f(data[1], data[2], data[3]));
             vAcc.push_back(cv::Point3f(data[4], data[5], data[6]));
-            vOdo.push_back(cv::Point3f(data[7], data[8], data[9]));
+            //vOdo.push_back(cv::Point3f(data[7], data[8], data[9]));
         }
     }
     cout << "Finish LoadIMU: " << vTimeStamps.size() << endl;

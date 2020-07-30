@@ -20,7 +20,7 @@
 
 #include "Viewer.h"
 #include <pangolin/pangolin.h>
-
+#include "util.h"
 #include <mutex>
 
 namespace ORB_SLAM2 {
@@ -126,6 +126,8 @@ namespace ORB_SLAM2 {
             cv::Mat im = mpFrameDrawer->DrawFrame();
             cv::imshow("ORB-SLAM2: Current Frame", im);
             cv::waitKey(mT);
+            createDirectory("./odometry/");
+            cv::imwrite("./odometry/" + to_string(mpTracker->mCurrentFrame.mnRealId) + ".jpg", im );
 
             if (menuReset) {
                 menuShowGraph = true;
