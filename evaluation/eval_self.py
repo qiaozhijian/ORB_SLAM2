@@ -23,7 +23,7 @@ def main(args):
     est_xyz = numpy.asarray([[float(value) * float(args.scale) for value in args.est_traj[b][0:3]] for a, b in matches])
     est_quat = numpy.asarray([[float(value) for value in args.est_traj[b][3:]] for a, b in matches])
 
-    # plot_slam_eval(est_stamps, est_xyz, gt_stamps, gt_xyz)
+    plot_slam_eval(est_stamps, est_xyz, gt_stamps, gt_xyz)
 
     trans_err_mean, trans_err_max, trans_err_median, rot_err_mean, rot_err_max, rot_err_median = evo_ape(est_xyz,
                                                                                                          est_quat,
@@ -43,9 +43,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--gt_path', help='ground truth trajectory (format: timestamp tx ty tz qx qy qz qw)',default="")
     parser.add_argument('--est_path', help='est_path trajectory (format: timestamp tx ty tz qx qy qz qw)',default="")
-    parser.add_argument('--scale', help='scaling factor for the second trajectory (default: 1.0)', default=0.95)
+    parser.add_argument('--scale', help='scaling factor for the second trajectory (default: 1.0)', default=1.0)
     parser.add_argument('--seq', type=str, default="01")
-    parser.add_argument('--slam', type=str, default='plo')
+    parser.add_argument('--slam', type=str, default='orb')
     parser.add_argument('--type_slam', type=str, default='vo')
     parser.add_argument('--suffix', type=str, default="")
     parser.add_argument('--scaleAlign', type=bool, default=False)
