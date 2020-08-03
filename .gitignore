@@ -22,3 +22,11 @@ build/
 *~
 lib/
 
+.idea
+.kdev4
+*.fuse*
+Reference
+cmake-build-release
+cmake-build-debug
+*kate*
+*.pyc*
