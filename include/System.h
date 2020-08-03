@@ -40,7 +40,7 @@
 #include "odometer.h"
 
 #define CLOSE_LOOP true
-#define SPEED_UP 1
+#define SPEED_UP 2
 
 namespace ORB_SLAM2
 {

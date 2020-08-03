@@ -46,9 +46,8 @@ int main(int argc, char **argv)
     vector<string> vstrImageLeft;
     vector<string> vstrImageRight;
     vector<double> vTimeStamp;
-    cerr << "Start LoadImages." << endl;
     LoadImages(string(argv[3]), string(argv[4]), string(argv[5]), vstrImageLeft, vstrImageRight, vTimeStamp);
-    cerr << "Finish LoadImages." << endl;
+
     if(vstrImageLeft.empty() || vstrImageRight.empty())
     {
         cerr << "ERROR: No images in provided path." << endl;
@@ -88,23 +87,21 @@ int main(int argc, char **argv)
     int cols_r = fsSettings["RIGHT.width"];
 
     if(K_l.empty() || K_r.empty() || P_l.empty() || P_r.empty() || R_l.empty() || R_r.empty() || D_l.empty() || D_r.empty() ||
-            rows_l==0 || rows_r==0 || cols_l==0 || cols_r==0)
+       rows_l==0 || rows_r==0 || cols_l==0 || cols_r==0)
     {
         cerr << "ERROR: Calibration parameters to rectify stereo are missing!" << endl;
         return -1;
     }
-// 相机校正
+
     cv::Mat M1l,M2l,M1r,M2r;
     cv::initUndistortRectifyMap(K_l,D_l,R_l,P_l.rowRange(0,3).colRange(0,3),cv::Size(cols_l,rows_l),CV_32F,M1l,M2l);
     cv::initUndistortRectifyMap(K_r,D_r,R_r,P_r.rowRange(0,3).colRange(0,3),cv::Size(cols_r,rows_r),CV_32F,M1r,M2r);
-    //cv::initUndistortRectifyMap(K_l,D_l,R_l,cv::Mat(),cv::Size(cols_l,rows_l),CV_32F,M1l,M2l);
-    //cv::initUndistortRectifyMap(K_r,D_r,R_r,cv::Mat(),cv::Size(cols_r,rows_r),CV_32F,M1r,M2r);
 
 
     const int nImages = vstrImageLeft.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO, true);
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,true);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -121,7 +118,7 @@ int main(int argc, char **argv)
         // Read left and right images from file
         imLeft = cv::imread(vstrImageLeft[ni],CV_LOAD_IMAGE_UNCHANGED);
         imRight = cv::imread(vstrImageRight[ni],CV_LOAD_IMAGE_UNCHANGED);
-        cout << "frame: " << ni << endl;
+
         if(imLeft.empty())
         {
             cerr << endl << "Failed to load image at: "
@@ -135,24 +132,9 @@ int main(int argc, char **argv)
                  << string(vstrImageRight[ni]) << endl;
             return 1;
         }
-        
-//         校正
+
         cv::remap(imLeft,imLeftRect,M1l,M2l,cv::INTER_LINEAR);
         cv::remap(imRight,imRightRect,M1r,M2r,cv::INTER_LINEAR);
-
-        //cv::Size imageSize(cols_l,rows_l);
-        //cv::Mat canvas(imageSize.height, imageSize.width * 2, CV_8UC1);
-        //cv::Mat canLeft = canvas(cv::Rect(0, 0, imageSize.width, imageSize.height));
-        //cv::Mat canRight = canvas(cv::Rect(imageSize.width, 0, imageSize.width, imageSize.height));
-        //cout<<"canLeft: "<<canLeft.type()<<" canvas: "<<canvas.type()<<endl;
-        //imLeft(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canLeft);
-        //imRight(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canRight);
-        //cout << "done" << endl;
-        //for (int j = 0; j <= canvas.rows; j += 16)
-        //    cv::line(canvas, cv::Point(0, j), cv::Point(canvas.cols, j), cv::Scalar(0, 255, 0), 1, 8);
-        //    cout << "stereo rectify done" << endl;
-        //cv::imshow("canvas",canvas);
-        //cv::waitKey(0);
 
         double tframe = vTimeStamp[ni];
 
@@ -173,8 +155,7 @@ int main(int argc, char **argv)
 #endif
 
         double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
-        
-//         track时长
+
         vTimesTrack[ni]=ttrack;
 
         // Wait to load the next frame
@@ -182,11 +163,10 @@ int main(int argc, char **argv)
         if(ni<nImages-1)
             T = vTimeStamp[ni+1]-tframe;
         else if(ni>0)
-            cout<<"ni: "<<ni<<"nImages: "<<nImages<<"vTimeStamp size: "<<vTimeStamp.size()<<endl;
             T = tframe-vTimeStamp[ni-1];
 
         //if(ttrack<T)
-            //usleep((T-ttrack)*1e6);
+        //    usleep((T-ttrack)*1e6);
     }
 
     // Stop all threads
@@ -204,7 +184,7 @@ int main(int argc, char **argv)
     cout << "mean tracking time: " << totaltime/nImages << endl;
 
     // Save camera trajectory
-    SLAM.SaveTrajectoryTUM("orbstereo_101.txt");
+    SLAM.SaveTrajectoryTUM("V101_CameraTrajectory.txt");
 
     return 0;
 }
@@ -225,12 +205,10 @@ void LoadImages(const string &strPathLeft, const string &strPathRight, const str
         {
             stringstream ss;
             ss << s;
-//             依据时间戳进行选点
             vstrImageLeft.push_back(strPathLeft + "/" + ss.str() + ".png");
             vstrImageRight.push_back(strPathRight + "/" + ss.str() + ".png");
             double t;
             ss >> t;
-            //kitti单位是秒，euroc是us
             vTimeStamps.push_back(t/1e9);
 
         }

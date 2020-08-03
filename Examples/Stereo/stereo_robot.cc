@@ -32,8 +32,8 @@
 #include"ImuTypes.h"
 
 using namespace std;
-void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro);
 void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps);
+void LoadIMU(const string &strImuPath, vector<double> &vTimeStamps, vector<cv::Point3f> &vAcc, vector<cv::Point3f> &vGyro);
 void LoadOdoPose(const string &strImuPath, vector<double> &vTimeStamps, vector<ORB_SLAM2::OdoPose>& vOdoPose);
 void CheckImage(const cv::Mat& imLeftRect, const cv::Mat& imRightRect);
 ofstream staticsFile("./output/"+string("statics_temp.txt"));
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
     const int nImages = vstrImageLeft.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO, false);
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO, true);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -250,23 +250,6 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void CheckImage(const cv::Mat& imLeftRect, const cv::Mat& imRightRect)
-{
-    int cols_l = imLeftRect.cols;
-    int rows_l = imLeftRect.rows;
-    cv::Size imageSize(cols_l,rows_l);
-    cv::Mat canvas(imageSize.height, imageSize.width * 2, CV_8UC3);
-    cv::Mat canLeft = canvas(cv::Rect(0, 0, imageSize.width, imageSize.height));
-    cv::Mat canRight = canvas(cv::Rect(imageSize.width, 0, imageSize.width, imageSize.height));
-    //cout<<"canLeft: "<<imLeft.type()<<" canvas: "<<canvas.type()<<endl;
-    imLeftRect(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canLeft);
-    imRightRect(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canRight);
-    for (int j = 0; j <= canvas.rows; j += 16)
-        cv::line(canvas, cv::Point(0, j), cv::Point(canvas.cols, j), cv::Scalar(0, 255, 0), 1, 8);
-    cv::imshow("canvas",canvas);
-    cv::waitKey(0);
-}
-
 void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps)
 {
     cerr << "Start LoadImages." << endl;
@@ -339,6 +322,23 @@ void LoadImages(string &strPath, vector<string> &vstrImageLeft, vector<string> &
     cout<<"Finish LoadImages: "<<vstrImageLeft.size()<<endl;
 }
 
+
+void CheckImage(const cv::Mat& imLeftRect, const cv::Mat& imRightRect)
+{
+    int cols_l = imLeftRect.cols;
+    int rows_l = imLeftRect.rows;
+    cv::Size imageSize(cols_l,rows_l);
+    cv::Mat canvas(imageSize.height, imageSize.width * 2, CV_8UC3);
+    cv::Mat canLeft = canvas(cv::Rect(0, 0, imageSize.width, imageSize.height));
+    cv::Mat canRight = canvas(cv::Rect(imageSize.width, 0, imageSize.width, imageSize.height));
+    //cout<<"canLeft: "<<imLeft.type()<<" canvas: "<<canvas.type()<<endl;
+    imLeftRect(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canLeft);
+    imRightRect(cv::Rect(0, 0, imageSize.width, imageSize.height)).copyTo(canRight);
+    for (int j = 0; j <= canvas.rows; j += 16)
+        cv::line(canvas, cv::Point(0, j), cv::Point(canvas.cols, j), cv::Scalar(0, 255, 0), 1, 8);
+    cv::imshow("canvas",canvas);
+    cv::waitKey(0);
+}
 #define ODO_TXT_LEN 8
 void LoadOdoPose(const string &strImuPath, vector<double> &vTimeStamps, vector<ORB_SLAM2::OdoPose>& vOdoPose)
 {

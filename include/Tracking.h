@@ -102,7 +102,6 @@ public:
 
     eTrackingState mState;
     eTrackingState mLastProcessedState;
-    eTrackingState mStateLastTrack;
     eTrackingMode mTrackingMode;
 
     // Input sensor
