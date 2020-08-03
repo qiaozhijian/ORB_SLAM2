@@ -52,7 +52,7 @@ if __name__ == "__main__":
                         default="")
     parser.add_argument('--est_path', help='est_path trajectory (format: timestamp tx ty tz qx qy qz qw)', default="")
     parser.add_argument('--scale', help='scaling factor for the second trajectory (default: 1.0)', default=1.0)
-    parser.add_argument('--seq', type=str, default="03")
+    parser.add_argument('--seq', type=str, default="01")
     parser.add_argument('--slam', type=str, default='orb')
     parser.add_argument('--type_slam', type=str, default='slam')
     parser.add_argument('--suffix', type=str, default="")
@@ -92,16 +92,16 @@ if __name__ == "__main__":
     if not args.odometry:
         args.est_traj[:, 1:4] = args.est_traj[:, 1:4] * args.scale
         args.est_traj = trans_robot_slam(args.est_traj)
-        # eval_name = args.est_path[:-4] + "_BodyFrame.txt"
-        # saveTum(eval_name, args.est_traj)
+        eval_name = args.est_path[:-4] + "_BodyFrame.txt"
+        saveTum(eval_name, args.est_traj)
     else:
         args.est_traj = trans_robot_odometry(args.est_traj)
         # eval_name = args.est_path[:-4] + "_BodyFrame.txt"
         # saveTum(eval_name, args.est_traj)
 
     args.gt_traj = trans_robot_vicon(args.gt_traj)
-    # gt_file_new = args.gt_path[:-4] + "_BodyFrame.txt"
-    # saveTum(gt_file_new, args.gt_traj)
+    gt_file_new = args.gt_path[:-4] + "_BodyFrame.txt"
+    saveTum(gt_file_new, args.gt_traj)
 
     args.est_traj = npToDict(args.est_traj)
     args.gt_traj = npToDict(args.gt_traj)
@@ -109,10 +109,10 @@ if __name__ == "__main__":
     main(args)
 
     if (False):
-        # os.system(
-        #     "evo_traj tum " + eval_name + " --ref " + gt_file_new + " --save_plot {}_{}_{}.pgf --plot --plot_mode=xyz".format(
-        #         seq, slam, type_slam) + suffix)
+        os.system(
+            "evo_traj tum " + eval_name + " --ref " + gt_file_new + " --save_plot {}_{}_{}.pgf --plot --plot_mode=xyz".format(
+                args.seq, args.slam, args.type_slam) + args.suffix)
         # angle_deg
-        os.system("evo_ape tum " + gt_file_new + " " + eval_name + " -r trans_part -p" + suffix)
-        os.system("evo_ape tum " + gt_file_new + " " + eval_name + " -r angle_deg" + suffix)
-        # os.system("evo_rpe tum "+ gt_file_new+ " " + eval_name + suffix)
+        os.system("evo_ape tum " + gt_file_new + " " + eval_name + " -r trans_part -p" + args.suffix)
+        os.system("evo_ape tum " + gt_file_new + " " + eval_name + " -r angle_deg" + args.suffix)
+        # os.system("evo_rpe tum "+ gt_file_new+ " " + eval_name + args.suffix)
