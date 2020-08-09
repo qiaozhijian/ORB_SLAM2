@@ -59,7 +59,7 @@ namespace ORB_SLAM2 {
 
     void
     PointCloudMapping::insertKeyFrame(KeyFrame *kf, cv::Mat &color, cv::Mat &depth, int idk, vector<KeyFrame *> vpKFs) {
-        //cout << "receive a keyframe, id = " << idk << " 第" << kf->mnId << "个" << endl;
+        cout << "receive a keyframe, id = " << idk << " 第" << kf->mnId << "个" << endl;
         //cout<<"vpKFs数量"<<vpKFs.size()<<endl;
         unique_lock<mutex> lck(keyframeMutex);
         keyframes.push_back(kf);
