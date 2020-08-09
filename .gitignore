@@ -22,3 +22,22 @@ build/
 *~
 lib/
 
+build/
+/build/
+dataset/
+*~
+lib/
+.kdev4/
+Examples/ROS/ORB_SLAM2/.fuse*
+*.kdev4
+*.kate-swp
+/cmake-build-debug/
+.idea/
+.idea/*
+/cmake-build-release/
+visual
+odometry
+.fuse*
+Examples/stereo_robot
+__pycach*
+Reference

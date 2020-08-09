@@ -30,98 +30,114 @@
 #include <mutex>
 
 
-namespace ORB_SLAM2
-{
+namespace ORB_SLAM2 {
 
-class Tracking;
-class LoopClosing;
-class Map;
+    class Tracking;
 
-class LocalMapping
-{
-public:
-    LocalMapping(Map* pMap, const float bMonocular);
+    class LoopClosing;
 
-    void SetLoopCloser(LoopClosing* pLoopCloser);
+    class Map;
 
-    void SetTracker(Tracking* pTracker);
+    class LocalMapping {
+    public:
+        LocalMapping(Map *pMap, const float bMonocular);
 
-    // Main function
-    void Run();
+        void SetLoopCloser(LoopClosing *pLoopCloser);
 
-    void InsertKeyFrame(KeyFrame* pKF);
+        void SetTracker(Tracking *pTracker);
 
-    // Thread Synch
-    void RequestStop();
-    void RequestReset();
-    bool Stop();
-    void Release();
-    bool isStopped();
-    bool stopRequested();
-    bool AcceptKeyFrames();
-    void SetAcceptKeyFrames(bool flag);
-    bool SetNotStop(bool flag);
+        // Main function
+        void Run();
 
-    void InterruptBA();
+        void InsertKeyFrame(KeyFrame *pKF);
 
-    void RequestFinish();
-    bool isFinished();
+        // Thread Synch
+        void RequestStop();
 
-    int KeyframesInQueue(){
-        unique_lock<std::mutex> lock(mMutexNewKFs);
-        return mlNewKeyFrames.size();
-    }
+        void RequestReset();
 
-protected:
+        bool Stop();
 
-    bool CheckNewKeyFrames();
-    void ProcessNewKeyFrame();
-    void CreateNewMapPoints();
+        void Release();
 
-    void MapPointCulling();
-    void SearchInNeighbors();
+        bool isStopped();
 
-    void KeyFrameCulling();
+        bool stopRequested();
 
-    cv::Mat ComputeF12(KeyFrame* &pKF1, KeyFrame* &pKF2);
+        bool AcceptKeyFrames();
 
-    cv::Mat SkewSymmetricMatrix(const cv::Mat &v);
+        void SetAcceptKeyFrames(bool flag);
 
-    bool mbMonocular;
+        bool SetNotStop(bool flag);
 
-    void ResetIfRequested();
-    bool mbResetRequested;
-    std::mutex mMutexReset;
+        void InterruptBA();
 
-    bool CheckFinish();
-    void SetFinish();
-    bool mbFinishRequested;
-    bool mbFinished;
-    std::mutex mMutexFinish;
+        void RequestFinish();
 
-    Map* mpMap;
+        bool isFinished();
 
-    LoopClosing* mpLoopCloser;
-    Tracking* mpTracker;
+        int KeyframesInQueue() {
+            unique_lock<std::mutex> lock(mMutexNewKFs);
+            return mlNewKeyFrames.size();
+        }
 
-    std::list<KeyFrame*> mlNewKeyFrames;
+    protected:
 
-    KeyFrame* mpCurrentKeyFrame;
+        bool CheckNewKeyFrames();
 
-    std::list<MapPoint*> mlpRecentAddedMapPoints;
+        void ProcessNewKeyFrame();
 
-    std::mutex mMutexNewKFs;
+        void CreateNewMapPoints();
 
-    bool mbAbortBA;
+        void MapPointCulling();
 
-    bool mbStopped;
-    bool mbStopRequested;
-    bool mbNotStop;
-    std::mutex mMutexStop;
+        void SearchInNeighbors();
 
-    bool mbAcceptKeyFrames;
-    std::mutex mMutexAccept;
-};
+        void KeyFrameCulling();
+
+        cv::Mat ComputeF12(KeyFrame *&pKF1, KeyFrame *&pKF2);
+
+        cv::Mat SkewSymmetricMatrix(const cv::Mat &v);
+
+        bool mbMonocular;
+
+        void ResetIfRequested();
+
+        bool mbResetRequested;
+        std::mutex mMutexReset;
+
+        bool CheckFinish();
+
+        void SetFinish();
+
+        bool mbFinishRequested;
+        bool mbFinished;
+        std::mutex mMutexFinish;
+
+        Map *mpMap;
+
+        LoopClosing *mpLoopCloser;
+        Tracking *mpTracker;
+
+        // Tracking线程向LocalMapping中插入关键帧是先插入到该队列中
+        std::list<KeyFrame *> mlNewKeyFrames;///< 等待处理的关键帧列表
+
+        KeyFrame *mpCurrentKeyFrame;
+
+        std::list<MapPoint *> mlpRecentAddedMapPoints;
+
+        std::mutex mMutexNewKFs;
+
+        bool mbAbortBA;
+
+        bool mbStopped;
+        bool mbStopRequested;
+        bool mbNotStop;
+        std::mutex mMutexStop;
+
+        bool mbAcceptKeyFrames;
+        std::mutex mMutexAccept;
+    };
 
 } //namespace ORB_SLAM
 
