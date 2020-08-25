@@ -204,11 +204,14 @@ namespace ORB_SLAM2 {
                 mbReset = false;
             }
         }
-
+#ifdef USE_ODO
         mpOdo->UpdatePose(mvOdoPoseMeas);
+#endif
 //  当前帧相机姿态 世界坐标系到相机坐标坐标系的变换矩阵 Tcw
         cv::Mat Tcw = mpTracker->GrabImageStereo(ni, imLeft, imRight, timestamp);
+#ifdef USE_ODO
         mpOdo->RememberLast();
+#endif
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;

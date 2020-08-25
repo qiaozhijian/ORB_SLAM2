@@ -1,0 +1,27 @@
+<launch>
+    <!--定义全局参数-->
+    <arg name="left_image" default="/cam0/image_raw"/>
+    <arg name="right_image" default="/cam1/image_raw"/>
+    <arg name="path_to_vacabulary" default="/media/qzj/Software/code/catkin_ws/src/ORB_SLAM2/Vocabulary/ORBvoc.txt"/>
+    <arg name="path_to_settings" default="/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round3/cali/result/robot_orb_stereo.yaml"/>
+
+    <!--启动ORB-SLAM2 RGBD-->
+    <node name ="stereo_node" pkg="orb_slam2" type="stereo_node"
+        args="$(arg path_to_vacabulary) $(arg path_to_settings) true" respawn="true" output="screen">
+        <remap from="/camera/left/image_raw" to="$(arg left_image)"/>
+        <remap from="/camera/right/image_raw" to="$(arg right_image)"/>
+    </node>
+
+        <arg name="bag" default="/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round3/01/2020-07-26-19-47-34.bag"/>
+    <!--    <arg name="bag" default="/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round3/02/2020-07-26-19-49-21.bag"/>-->
+<!--    <arg name="bag" default="/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round3/03/2020-07-26-19-50-56.bag"/>-->
+    <!--    <arg name="bag" default="/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round3/04/2020-07-29-18-40-03.bag"/>-->
+    <!--    <arg name="bag" default="/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round3/05/2020-07-29-18-41-52.bag"/>-->
+    <!--    <arg name="bag" default="/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round3/06/2020-07-29-18-43-57.bag"/>-->
+    <!--    <arg name="bag" default="/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round3/07/2020-08-12-16-41-28.bag"/>-->
+    <!--    <arg name="bag" default="/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round3/08/2020-08-12-16-47-23.bag"/>-->
+    <!--    <arg name="bag" default="/media/qzj/Document/grow/research/slamDataSet/sweepRobot/round3/09/2020-08-12-16-54-51.bag"/>-->
+    <!-- play the dataset -->
+    <node pkg="rosbag" type="play" name="rosbag" args="--pause $(arg bag)"/>
+
+</launch>

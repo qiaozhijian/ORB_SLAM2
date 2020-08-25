@@ -380,10 +380,15 @@ namespace ORB_SLAM2 {
 
                 } else
                 {
+
+#ifdef USE_ODO
                     if(!mpOdo->mVelocityCam.empty())
                         mVelocity = mpOdo->mVelocityCam;
                     else
                         mVelocity = cv::Mat();
+#else
+                    mVelocity = cv::Mat();
+#endif
                 }
 
                 mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
@@ -431,11 +436,11 @@ namespace ORB_SLAM2 {
                 }
             }
 
-            if (!bOK && mState == LOST) {
-                PredictCurrentFrame();
-                bOK = true;
-                mState = INITIALIZED_AGAIN;
-            }
+            //if (!bOK && mState == LOST) {
+            //    PredictCurrentFrame();
+            //    bOK = true;
+            //    mState = INITIALIZED_AGAIN;
+            //}
 
             if (!mCurrentFrame.mpReferenceKF)
                 mCurrentFrame.mpReferenceKF = mpReferenceKF;
@@ -1000,9 +1005,9 @@ namespace ORB_SLAM2 {
         // Create "visual odometry" points if in Localization Mode
         UpdateLastFrame();
 
-        //if(!mpOdo->mVelocityCam.empty())
-        //    mCurrentFrame.SetPose(mpOdo->mVelocityCam * mLastFrame.mTcw);
-        //else
+        if(!mpOdo->mVelocityCam.empty())
+            mCurrentFrame.SetPose(mpOdo->mVelocityCam * mLastFrame.mTcw);
+        else
             mCurrentFrame.SetPose(mVelocity * mLastFrame.mTcw);
 
         fill(mCurrentFrame.mvpMapPoints.begin(), mCurrentFrame.mvpMapPoints.end(), static_cast<MapPoint *>(NULL));

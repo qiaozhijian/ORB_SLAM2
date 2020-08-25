@@ -32,7 +32,7 @@
 
 #include<opencv2/core/core.hpp>
 
-#include"../../../include/System.h"
+#include"System.h"
 
 using namespace std;
 
@@ -50,7 +50,7 @@ public:
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "RGBD");
+    ros::init(argc, argv, "stereo_node");
     ros::start();
 
     if(argc != 4)
@@ -110,8 +110,10 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
 
     message_filters::Subscriber<sensor_msgs::Image> left_sub(nh, "/camera/left/image_raw", 1);
-    message_filters::Subscriber<sensor_msgs::Image> right_sub(nh, "camera/right/image_raw", 1);
+    message_filters::Subscriber<sensor_msgs::Image> right_sub(nh, "/camera/right/image_raw", 1);
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
+    //The message_filters::sync_policies::ApproximateTime policy uses an adaptive algorithm to match messages based on their timestamp.
+    // The synchronizer will tend to drop many messages with a queue size of 1. At least 2 is recommended.
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), left_sub,right_sub);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabStereo,&igb,_1,_2));
 
@@ -132,6 +134,7 @@ int main(int argc, char **argv)
 
 void ImageGrabber::GrabStereo(const sensor_msgs::ImageConstPtr& msgLeft,const sensor_msgs::ImageConstPtr& msgRight)
 {
+    static long int ni=0;
     // Copy the ros image message to cv::Mat.
     cv_bridge::CvImageConstPtr cv_ptrLeft;
     try
@@ -160,13 +163,12 @@ void ImageGrabber::GrabStereo(const sensor_msgs::ImageConstPtr& msgLeft,const se
         cv::Mat imLeft, imRight;
         cv::remap(cv_ptrLeft->image,imLeft,M1l,M2l,cv::INTER_LINEAR);
         cv::remap(cv_ptrRight->image,imRight,M1r,M2r,cv::INTER_LINEAR);
-        mpSLAM->TrackStereo(ni, imLeft,imRight,cv_ptrLeft->header.stamp.toSec());
+        mpSLAM->TrackStereo(ni++, imLeft,imRight,cv_ptrLeft->header.stamp.toSec());
     }
     else
     {
-        mpSLAM->TrackStereo(ni, cv_ptrLeft->image,cv_ptrRight->image,cv_ptrLeft->header.stamp.toSec());
+        mpSLAM->TrackStereo(ni++, cv_ptrLeft->image,cv_ptrRight->image,cv_ptrLeft->header.stamp.toSec());
     }
-
 }
 
 

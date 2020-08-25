@@ -41,6 +41,7 @@
 
 #define CLOSE_LOOP true
 #define SPEED_UP 1
+//#define USE_ODO
 
 namespace ORB_SLAM2
 {
