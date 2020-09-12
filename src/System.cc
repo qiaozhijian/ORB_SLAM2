@@ -27,6 +27,7 @@
 #include <iomanip>
 #include "util.h"
 #include "odometer.h"
+#include <boost/variant/detail/backup_holder.hpp>
 
 namespace ORB_SLAM2 {
 
@@ -462,21 +463,199 @@ namespace ORB_SLAM2 {
             cv::Mat Rwc = Tcw.rowRange(0, 3).colRange(0, 3).t();
             cv::Mat twc = -Rwc * Tcw.rowRange(0, 3).col(3);
 
-            f << setprecision(9) << Rwc.at<float>(0, 0) << " " << Rwc.at<float>(0, 1) << " " << Rwc.at<float>(0, 2)
-              << " " << twc.at<float>(0) << " " <<
-              Rwc.at<float>(1, 0) << " " << Rwc.at<float>(1, 1) << " " << Rwc.at<float>(1, 2) << " " << twc.at<float>(1)
-              << " " <<
-              Rwc.at<float>(2, 0) << " " << Rwc.at<float>(2, 1) << " " << Rwc.at<float>(2, 2) << " " << twc.at<float>(2)
-              << endl;
-        }
-        f.close();
-        cout << endl << "trajectory saved!" << endl;
-    }
+			f << setprecision(9) << Rwc.at<float>(0, 0) << " " << Rwc.at<float>(0, 1) << " " << Rwc.at<float>(0, 2) << " " << twc.at<float>(0) << " " <<
+				Rwc.at<float>(1, 0) << " " << Rwc.at<float>(1, 1) << " " << Rwc.at<float>(1, 2) << " " << twc.at<float>(1) << " " <<
+				Rwc.at<float>(2, 0) << " " << Rwc.at<float>(2, 1) << " " << Rwc.at<float>(2, 2) << " " << twc.at<float>(2) << endl;
+		}
+		f.close();
+		cout << endl << "trajectory saved!" << endl;
+	}
 
-    int System::GetTrackingState() {
-        unique_lock<mutex> lock(mMutexState);
-        return mTrackingState;
-    }
+
+	void System::SaveGridMapTUM(const string &filename)
+	{
+
+		cout << endl << "Saving grid map to " << filename << " ..." << endl;
+		vector<MapPoint*> vpMPs = mpMap->GetAllMapPoints();
+
+		// Transform all keyframes so that the first keyframe is at the origin.
+		// After a loop closure the first keyframe might not be at the origin.
+		ofstream f;
+		f.open(filename.c_str());
+		//f << fixed;
+
+		f << "P2" << endl;
+
+		// Init Grid Statictics
+		// We set the resolution as 10mm, all points and keyframes are in the range of (-3, -4) to (3, 1),
+		// so the grid map size is 600x500
+		const float upper_left_x = -1.5;
+		const float upper_left_y = -2.5;
+		const int resolution = 10;
+		const int h = 300;
+		const int w = 450;
+		double grid_occup[w][h];
+		double grid_visit[w][h];
+
+		memset(grid_occup, 0, sizeof(grid_occup[0][0]) * w * h);
+		memset(grid_visit, 0, sizeof(grid_visit[0][0]) * w * h);
+
+		f << w << " " << h << endl;
+		f << 255 << endl;
+
+		for (size_t i = 0; i<vpMPs.size(); i++)
+		{
+			MapPoint* pMP = vpMPs[i];
+
+			if (pMP->isBad())
+				continue;
+			// Get the grid position of the map point
+			cv::Mat MPPositions = pMP->GetWorldPos();
+			float mp_pos_x = MPPositions.at<float>(0);
+			float mp_pos_y = MPPositions.at<float>(1);
+
+			int mp_pos_grid_x = ((int)((mp_pos_x - upper_left_x) * 1000)) / resolution;
+			int mp_pos_grid_y = ((int)((mp_pos_y - upper_left_y) * 1000)) / resolution;
+
+			if (mp_pos_grid_x < 0 || mp_pos_grid_x >= w)
+				continue;
+
+			if (mp_pos_grid_y < 0 || mp_pos_grid_y >= h)
+				continue;
+
+			// Increment the occupency account of the grid cell where map point is located
+			grid_occup[mp_pos_grid_x][mp_pos_grid_y]++;
+
+			// Get all KeyFrames that observes the map point
+			std::map<KeyFrame*, size_t> obsFrames = pMP->GetObservations();
+			std::map<KeyFrame*, size_t>::iterator it;
+
+			//cout << "----------------------" << endl;
+			for (it = obsFrames.begin(); it != obsFrames.end(); it++)
+			{
+				KeyFrame* oKF = it->first;
+				if (oKF->isBad())
+					continue;
+
+				// Get the grid position of the KeyFrame
+				cv::Mat t = oKF->GetCameraCenter();
+				float okf_pos_x = t.at<float>(0);
+				float okf_pos_y = t.at<float>(1);
+				int okf_pos_grid_x = ((int)((okf_pos_x - upper_left_x) * 1000)) / resolution;
+				int okf_pos_grid_y = ((int)((okf_pos_y - upper_left_y) * 1000)) / resolution;
+
+				if (okf_pos_grid_x < 0 || okf_pos_grid_x >= w)
+					continue;
+
+				if (okf_pos_grid_y < 0 || okf_pos_grid_y >= h)
+					continue;
+
+				//cout << okf_pos_grid_x << " " << okf_pos_grid_y << endl;
+
+				// Get all grid cell that the line between keyframe and map point pass through
+				int x0 = okf_pos_grid_x;
+				int y0 = okf_pos_grid_y;
+				int x1 = mp_pos_grid_x;
+				int y1 = mp_pos_grid_y;
+				bool steep = (abs(y1 - y0) > abs(x1 - x0));
+				if (steep)
+				{
+					x0 = okf_pos_grid_y;
+					y0 = okf_pos_grid_x;
+					x1 = mp_pos_grid_y;
+					y1 = mp_pos_grid_x;
+				}
+				if (x0 > x1)
+				{
+					x0 = mp_pos_grid_y;
+					x1 = okf_pos_grid_y;
+					y0 = mp_pos_grid_x;
+					y1 = okf_pos_grid_x;
+				}
+				int deltax = x1 - x0;
+				int deltay = abs(y1 - y0);
+				double error = 0;
+				double deltaerr = ((double)deltay) / ((double)deltax);
+				int y = y0;
+				int ystep = (y0 < y1) ? 1 : -1;
+				for (int x = x0; x <= x1; x++)
+				{
+					if (steep)
+					{
+						grid_visit[y][x]++;
+					}
+					else
+					{
+						grid_visit[x][y]++;
+					}
+					error = error + deltaerr;
+					if (error >= 0.5)
+					{
+						y = y + ystep;
+						error = error - 1.0;
+					}
+				}
+			}
+		}
+
+		for (int i = 0; i<h; i++)
+		{
+			for (int j = 0; j<w; j++)
+			{
+				if (grid_visit[j][i] == 0)
+				{
+					f << 230 << " ";
+					continue;
+				}
+				double r = grid_occup[j][i] / grid_visit[j][i];
+				int grey = (int)(r * 255);
+				if (grey > 0)
+					grey += 100;
+				if (grey > 255)
+					grey = 255;
+				f << 255 - grey << " ";
+
+			}
+			f << endl;
+		}
+		f.close();
+		cout << endl << "Grid map saved!" << endl;
+	}
+
+	void System::Save2dMapPointsTUM(const string &filename, const int x, const int y)
+	{
+		cout << endl << "Saving 2d map points to " << filename << " ..." << endl;
+		cout << endl << "x = " << x << ", y = " << y << endl;
+
+		vector<MapPoint*> vpMPs = mpMap->GetAllMapPoints();
+
+		// Transform all keyframes so that the first keyframe is at the origin.
+		// After a loop closure the first keyframe might not be at the origin.
+		ofstream f;
+		f.open(filename.c_str());
+		f << fixed;
+
+		for (size_t i = 0; i<vpMPs.size(); i++)
+		{
+			MapPoint* pMP = vpMPs[i];
+
+			if (pMP->isBad())
+				continue;
+
+			cv::Mat MPPositions = pMP->GetWorldPos();
+
+			f << setprecision(7) << " " << MPPositions.at<float>(x) << " " << MPPositions.at<float>(y) << endl;
+		}
+
+		f.close();
+		cout << endl << "2d Map Points saved!" << endl;
+	}
+
+	int System::GetTrackingState()
+	{
+		unique_lock<mutex> lock(mMutexState);
+		return mTrackingState;
+	}
 
     vector<MapPoint *> System::GetTrackedMapPoints() {
         unique_lock<mutex> lock(mMutexState);

@@ -72,6 +72,14 @@ public:
 
 public:
 
+	Map* getMap() {
+		return mpMap;
+	}
+	Tracking* getTracker(){ return mpTracker; }
+	LocalMapping* getLocalMapping(){ return mpLocalMapper; }
+	LoopClosing* getLoopClosing(){ return mpLoopCloser; }
+
+
     // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
     System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true);
 
@@ -132,6 +140,11 @@ public:
     // Call first Shutdown()
     // See format details at: http://www.cvlibs.net/datasets/kitti/eval_odometry.php
     void SaveTrajectoryKITTI(const string &filename);
+
+	void Save2dMapPointsTUM(const string &filename, const int x, const int y);
+	void SaveGridMapTUM(const string &filename);
+
+
 
     // TODO: Save/Load functions
     // SaveMap(const string &filename);

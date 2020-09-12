@@ -79,6 +79,7 @@ public:
     void OutputCurrentMapPoints(string s = "");
 
 public:
+	bool loop_detected;
 
     // Tracking states
     enum eTrackingState{

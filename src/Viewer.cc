@@ -126,8 +126,8 @@ namespace ORB_SLAM2 {
             cv::Mat im = mpFrameDrawer->DrawFrame();
             //createDirectory("./odometry/");
             cv::namedWindow("ORB-SLAM2: Current Frame",0);
-            cv::resizeWindow("ORB-SLAM2: Current Frame", 960, 720);
-            cv::resize(im,im,cv::Size(960,720));
+            //cv::resizeWindow("ORB-SLAM2: Current Frame", 960, 720);
+            //cv::resize(im,im,cv::Size(960,720));
             cv::imshow("ORB-SLAM2: Current Frame", im);
             cv::waitKey(mT);
 

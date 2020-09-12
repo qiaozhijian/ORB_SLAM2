@@ -81,6 +81,7 @@ public:
     bool isFinished();
 
     bool enable = true;
+	bool loop_detected;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
