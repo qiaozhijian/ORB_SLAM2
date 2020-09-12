@@ -134,6 +134,7 @@ int main(int argc, char **argv)
 
 void ImageGrabber::GrabStereo(const sensor_msgs::ImageConstPtr& msgLeft,const sensor_msgs::ImageConstPtr& msgRight)
 {
+    double latency_trans = ros::Time::now().toSec() - msgLeft->header.stamp.toSec();
     static long int ni=0;
     // Copy the ros image message to cv::Mat.
     cv_bridge::CvImageConstPtr cv_ptrLeft;
@@ -169,6 +170,8 @@ void ImageGrabber::GrabStereo(const sensor_msgs::ImageConstPtr& msgLeft,const se
     {
         mpSLAM->TrackStereo(ni++, cv_ptrLeft->image,cv_ptrRight->image,cv_ptrLeft->header.stamp.toSec());
     }
+    double latency_total = ros::Time::now().toSec() - cv_ptrLeft->header.stamp.toSec();
+    cout << "Pose Tracking Latency: " << (latency_total - latency_trans) << " sec." << endl;
 }
 
 

@@ -66,13 +66,17 @@ namespace ORB_SLAM2 {
         cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
 
         mpVocabulary = new ORBVocabulary();
+        std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
         bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+        std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+        double t_loadVoc = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
         if (!bVocLoad) {
             cerr << "Wrong path to vocabulary. " << endl;
             cerr << "Falied to open at: " << strVocFile << endl;
             exit(-1);
         }
-        cout << "Vocabulary loaded!" << endl << endl;
+        //Vocabulary loaded! Spend 7.02809 seconds. L:6 leaf size: 971815
+        cout << "Vocabulary loaded! Spend "<<t_loadVoc<<" seconds. L:"<<mpVocabulary->getDepthLevels()<<" leaf size: "<<mpVocabulary->size() << endl;
 
         //Create KeyFrame Database
         mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
